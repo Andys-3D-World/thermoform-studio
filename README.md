@@ -1,5 +1,7 @@
 # Thermoform Studio
 
+**➡️ [Generator öffnen / Open the generator](https://andys-3d-world.github.io/thermoform-studio/)**
+
 Generator im Browser für 3D-druckbare Gitterplatten, die warm zwischen zwei Formen zu gewölbten Hälften eines hohlen Anhängers gepresst werden.
 
 - Text, Icon, Gesicht oder eigenes SVG als Design
