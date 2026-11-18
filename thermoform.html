@@ -66,6 +66,7 @@ canvas{display:block}
 <aside>
   <h1>Thermoform Studio</h1>
   <p class="sub">Flache Gitterplatten drucken, erwärmen, zwischen den Formen wölben, dann zusammenstecken und verschrauben.</p>
+  <div class="row"><label>Sprache</label><select id="lang"><option value="auto">Automatisch (System)</option><option value="de">Deutsch</option><option value="en">English</option></select></div>
 
   <details open><summary>Design</summary>
     <div class="row"><div class="seg" id="srcSeg"><button data-v="text" class="on">Text</button><button data-v="icon">Icon</button><button data-v="face">Gesicht</button><button data-v="svg">SVG</button></div></div>
@@ -188,6 +189,23 @@ import { TessellateModifier } from 'three/addons/modifiers/TessellateModifier.js
 import * as BGU from 'three/addons/utils/BufferGeometryUtils.js';
 import { zipSync, strToU8 } from 'https://cdn.jsdelivr.net/npm/fflate@0.8.2/esm/browser.js';
 import polygonClipping from 'https://cdn.jsdelivr.net/npm/polygon-clipping@0.15.7/+esm';
+
+/* ---------------- Sprache ---------------- */
+const EN={"Flache Gitterplatten drucken, erwärmen, zwischen den Formen wölben, dann zusammenstecken und verschrauben.": "Print flat lattice plates, heat them, dome them between the molds, then clip and screw the halves together.","Sprache": "Language","Automatisch (System)": "Automatic (system)","Gesicht": "Face","Laden": "Load","Icon-Name, z. B. rocket-launch": "Icon name, e.g. rocket-launch","Namen aus den Material Design Icons (pictogrammers.com).": "Names from the Material Design Icons (pictogrammers.com).","Text unter dem Icon (optional)": "Text below the icon (optional)","Schrift": "Font","Google-Font-Name oder URL": "Google Font name or URL","z. B. Bangers, Lobster, Pacifico, Anton …": "e.g. Bangers, Lobster, Pacifico, Anton …","Eigene Schrift (.ttf / .otf)": "Own font (.ttf / .otf)","SVG-Datei": "SVG file","Gefüllte Pfade werden erhaben übernommen.": "Filled paths are raised on the plate.","Größe automatisch an die Fläche anpassen": "Fit size to the available area automatically","An: „Designgröße\" ist der Anteil der verfügbaren Fläche (mit „Flache Mitte\" die ebene Fläche, sonst innerhalb des Randes).": "On: \"Design size\" is the share of the available area (with \"Flat middle\" the flat area, otherwise inside the rim).","Form": "Shape","Rahmen & Verbindung": "Frame & connection","Aufbau": "Construction","Zweiteilig: Schraubkappe + C-Clip": "Two halves: screw cap + C-clip","Einteilig: nur Öse": "Single part: hanging loop only","Design auch auf der Rückseite": "Design on the back as well","Oben halten die zwei Gewindehälften mit der Schraubkappe zusammen. Der C-Clip greift mit seinen Nasen hinter beide Rahmen; dafür ist die Platte dort ausgeklinkt. Kappe ab: um den Clip aufklappen.": "At the top the two thread halves are held together by the screw cap. The C-clip hooks behind both frames; the plate is notched there. Cap off: the halves hinge open around the clip.","Öse zum Aufhängen": "Hanging loop","Lochmuster": "Hole pattern","Muster": "Pattern","Keins (geschlossen)": "None (solid)","Waben": "Honeycomb","Kreise": "Circles","Quadrate": "Squares","Dreiecke": "Triangles","Ovale": "Ovals","Kreuze": "Crosses","Schlitze": "Slots","Ziegel": "Bricks","Rauten": "Diamonds","Sterne": "Stars","Herzen": "Hearts","Blumen": "Flowers","Tropfen": "Drops","Wellen": "Waves","Löcher an Rand und Design anschneiden": "Cut holes at rim and design","Umformung & Formen": "Forming & molds","Ansicht": "View","Druckteile (flach)": "Printed parts (flat)","Geformt (Vorschau)": "Formed (preview)","Zusammengebaut": "Assembled","Formen (Patrize/Matrize)": "Molds (male/female)","Drahtgitter": "Wireframe","Farben": "Colors","Gleiche Farbe = gleiches Filament. Die Reihenfolge der Filament-Plätze im Export:": "Same color = same filament. Order of the filament slots in the export:","3MF für Bambu Studio / Orca": "3MF for Bambu Studio / Orca","Projektdatei: jedes Teil ist schon seinem Filament-Platz zugewiesen, im Slicer muss nichts mehr eingefärbt werden. Nach dem Öffnen einmal „Anordnen\" drücken. Im Slicer müssen mindestens so viele Filamente angelegt sein wie oben Plätze stehen, sonst fallen die höheren Plätze auf Filament 1 zurück.": "Project file: every part is already assigned to its filament slot, nothing has to be painted in the slicer. Press \"Arrange\" once after opening. The slicer needs at least as many filaments as there are slots above, otherwise the higher slots fall back to filament 1.","3MF für andere Slicer": "3MF for other slicers","Einstellungen speichern (.json)": "Save settings (.json)","Einstellungen laden": "Load settings","Berechne …": "Computing …","Kamera": "Camera","Platte": "Plate","Rahmen & Gewinde": "Frame & thread","Kappe & Clip": "Cap & clip","Formen": "Molds","Rahmen": "Frame","Kappe": "Cap","Designgröße": "Design size","Vertikaler Versatz": "Vertical offset","Designhöhe (erhaben)": "Design height (raised)","Breite": "Width","Eckenrundung": "Corner rounding","Randbreite (flach)": "Rim width (flat)","Plattendicke": "Plate thickness","Rahmenbreite": "Frame width","Rahmenhöhe": "Frame height","Gewinde-Ø": "Thread Ø","Gewindesteigung": "Thread pitch","Gewindelänge": "Thread length","Gewinde-Position (0° = oben)": "Thread position (0° = top)","Gewindespiel": "Thread clearance","Clip-Länge": "Clip length","Clip-Position (0° = unten)": "Clip position (0° = bottom)","Lochabstand": "Hole spacing","Stegbreite": "Wall width","Drehung": "Rotation","Abstand zum Design": "Distance to design","Ösen-Außen-Ø": "Loop outer Ø","Loch-Ø": "Hole Ø","Formhöhe (Kuppel)": "Forming height (dome)","Kissenform (flach oben, steiler Rand)": "Pillow shape (flat top, steep edge)","Flache Mitte": "Flat middle","Passungsspiel": "Fit clearance","Formwand": "Mold wall","Formsockel": "Mold base","Lippe zwischen Mulde und Rahmen-Nut": "Lip between cavity and frame groove","Zusätzliche Tasche in der Kuppelform": "Extra pocket in the dome mold","An dieser Stelle braucht das Gewinde einen großen Sockel. Eine flachere Stelle wählen oder den Gewinde-Ø verkleinern.": "The thread needs a large base at this spot. Choose a flatter spot or reduce the thread Ø.","Kein Clip: An dieser Form gibt es keine Stelle, an der er als Scharnier funktioniert (gerade oder leicht nach außen gewölbt, ohne dass die Form über die Scharnierlinie ragt). Eckenrundung erhöhen, Form vergrößern oder eine andere Form wählen.": "No clip: this shape has no spot where it works as a hinge (straight or slightly convex, with no part of the shape crossing the hinge line). Increase corner rounding, enlarge the shape or pick another shape.","Clip auf {0} mm gekürzt, damit er an eine Stelle passt, an der sich das Ornament aufklappen lässt. ": "Clip shortened to {0} mm so it fits a spot where the ornament can hinge open. ","Clip automatisch dorthin verschoben, wo das Aufklappen funktioniert.": "Clip moved automatically to a spot where hinging open works.","Form oder Gewindeposition sind nicht spiegelsymmetrisch: Die Rückseite ist gespiegelt und bekommt ein eigenes Formenpaar („hinten“).": "Shape or thread position are not mirror-symmetric: the back is mirrored and gets its own pair of molds (\"back\").","Hälfte": "Half","Druckteil": "Part","mm dick": "mm thick","Löcher": "Holes","Kuppel": "Dome","Pressform": "Mold","Vorderseite": "Front","Rückseite": "Back","Rueckseite": "Back","Schraubkappe": "Screw cap","Patrize": "Male mold","Matrize": "Female mold","Patrize vorn": "Male mold front","Matrize vorn": "Female mold front","Patrize hinten": "Male mold back","Matrize hinten": "Female mold back","vorderseite": "front","rueckseite": "back","kappe": "cap","druckteil": "part","patrize": "male_mold","matrize": "female_mold","patrize_hinten": "male_mold_back","matrize_hinten": "female_mold_back","einstellungen": "settings","gesicht": "face","Lade „{0}“ …": "Loading \"{0}\" …","„{0}“ geladen.": "\"{0}\" loaded.","„{0}“ nicht gefunden. Bitte den genauen Namen von fonts.google.com verwenden.": "\"{0}\" not found. Please use the exact name from fonts.google.com.","Icon „{0}“ geladen.": "Icon \"{0}\" loaded.","Icon „{0}“ nicht gefunden.": "Icon \"{0}\" not found."};
+let langPref='auto';try{langPref=localStorage.getItem('tf-lang')||'auto';}catch(e){}
+const sysLang=()=>((navigator.languages&&navigator.languages[0])||navigator.language||'en').toLowerCase().startsWith('de')?'de':'en';
+let LANG=langPref==='auto'?sysLang():langPref;
+const T=s=>LANG==='en'&&EN[s]!==undefined?EN[s]:s;
+const TF=(s,...a)=>T(s).replace(/\{(\d)\}/g,(m,i)=>a[i]);
+function translateDom(){
+  document.documentElement.lang=LANG;
+  const w=document.createTreeWalker(document.getElementById('app'),NodeFilter.SHOW_TEXT);
+  for(let n;n=w.nextNode();){
+    if(n.__de===undefined){const k=n.nodeValue.trim();if(!k||EN[k]===undefined)continue;n.__de=n.nodeValue;}
+    const k=n.__de.trim();n.nodeValue=n.__de.replace(k,()=>T(k));
+  }
+  document.querySelectorAll('#app [placeholder]').forEach(e=>{if(e.__dp===undefined)e.__dp=e.placeholder;e.placeholder=T(e.__dp);});
+}
 
 /* ---------------- Parameter ---------------- */
 const P = {
@@ -604,7 +622,7 @@ async function build(){
   // Clip: Platz suchen, Ausklinkung in der Platte direkt innen am Rahmen
   // Gewinde: Platz und Sockel
   const capR=P.studD/2+P.threadGap+2.4, st=orn?placeStud(B,P.studPos,P.studD,capR,W*0.3,outSym&&P.studPos===0):null;
-  document.getElementById('studMsg').textContent=st&&st.depth>W*0.2?'An dieser Stelle braucht das Gewinde einen großen Sockel. Eine flachere Stelle wählen oder den Gewinde-Ø verkleinern.':'';
+  document.getElementById('studMsg').textContent=st&&st.depth>W*0.2?T('An dieser Stelle braucht das Gewinde einen großen Sockel. Eine flachere Stelle wählen oder den Gewinde-Ø verkleinern.'):'';
   // Clip: erst mit der gewünschten Länge, sonst automatisch kürzer, bis eine Stelle passt, an der er als Scharnier taugt
   let cp=null,clipLen=P.clipLen;
   if(orn)for(const f of [1,0.75,0.55]){const Lc=Math.max(3,P.clipLen*f);const c=placeClip(B,Lc,P.clipPos,q=>Math.hypot(q[0]-st.p[0],q[1]-st.p[1])<P.studD+Lc+4,bw+2*fg+2.2,bw+0.6);
@@ -622,8 +640,8 @@ async function build(){
     notchExp=[...off(pw,-2),...line(h+P.wall,rIn+P.wall)];
     nearNotch=(x,y)=>inPoly(x,y,notchExp);
   }
-  document.getElementById('clipMsg').textContent=clipBad?'Kein Clip: An dieser Form gibt es keine Stelle, an der er als Scharnier funktioniert (gerade oder leicht nach außen gewölbt, ohne dass die Form über die Scharnierlinie ragt). Eckenrundung erhöhen, Form vergrößern oder eine andere Form wählen.'
-    :!cp?'':(clipLen<P.clipLen-0.01?`Clip auf ${clipLen.toFixed(1)} mm gekürzt, damit er an eine Stelle passt, an der sich das Ornament aufklappen lässt. `:'')+(cp.moved?'Clip automatisch dorthin verschoben, wo das Aufklappen funktioniert.':'');
+  document.getElementById('clipMsg').textContent=clipBad?T('Kein Clip: An dieser Form gibt es keine Stelle, an der er als Scharnier funktioniert (gerade oder leicht nach außen gewölbt, ohne dass die Form über die Scharnierlinie ragt). Eckenrundung erhöhen, Form vergrößern oder eine andere Form wählen.')
+    :!cp?'':(clipLen<P.clipLen-0.01?TF('Clip auf {0} mm gekürzt, damit er an eine Stelle passt, an der sich das Ornament aufklappen lässt. ',clipLen.toFixed(1)):'')+(cp.moved?T('Clip automatisch dorthin verschoben, wo das Aufklappen funktioniert.'):'');
   const clipSym=!cp||(Math.abs(cp.p[0])<0.01&&Math.abs(cp.n[0])<0.01);
 
   const lipW=hasBorder?P.lipW:0, Ld=lipW>0.05?offsetLoop(B,-(bw+lipW)):Lin; // Kuppel beginnt erst hinter der Lippe
@@ -828,7 +846,7 @@ async function build(){
     parts.push({name:'Patrize hinten',file:'patrize_hinten',kind:'mold',geos:[['Patrize',moldsB[0]]]});
     parts.push({name:'Matrize hinten',file:'matrize_hinten',kind:'mold2',geos:[['Matrize',moldsB[1]]]});
   }
-  document.getElementById('asymMsg').textContent=asym?'Form oder Gewindeposition sind nicht spiegelsymmetrisch: Die Rückseite ist gespiegelt und bekommt ein eigenes Formenpaar („hinten“).':'';
+  document.getElementById('asymMsg').textContent=asym?T('Form oder Gewindeposition sind nicht spiegelsymmetrisch: Die Rückseite ist gespiegelt und bekommt ein eigenes Formenpaar („hinten“).'):'';
   for(const p of parts)p.geos=p.geos.filter(g=>g[1]);
 
   last={parts,orn,asym,moldsB,plateGeo,backGeo,designGeo,designB,maleGeo,femaleGeo,cap,capM,clip,clipM,formedF:null,formedB:null,base,H,R,Ro,h,W,oy0,topY,botY,thick,fg};
@@ -841,10 +859,10 @@ async function build(){
   const vcount=plateGeo.attributes.position.count+(designGeo?designGeo.attributes.position.count:0);
   plateGeo.computeBoundingBox();const bb=plateGeo.boundingBox.clone();if(frameF){frameF.computeBoundingBox();bb.union(frameF.boundingBox);}
   document.getElementById('stats').innerHTML=
-    `<span>${orn?'Hälfte':'Druckteil'} <b>${(bb.max.x-bb.min.x).toFixed(1)} × ${(bb.max.y-bb.min.y).toFixed(1)} × ${(bb.max.z-bb.min.z).toFixed(1)} mm</b></span>`+
-    (orn?`<span>Ornament <b>${W.toFixed(0)} × ${(2*(h+thick)).toFixed(1)} mm dick</b></span>`:'')+
-    `<span>Löcher <b>${holesF.length}</b></span><span>Vertices <b>${vcount.toLocaleString('de')}</b></span>`+
-    `<span>Kuppel <b>${h.toFixed(1)} mm</b></span><span>Form <b>${(mb.max.x-mb.min.x).toFixed(0)} × ${(mb.max.y-mb.min.y).toFixed(0)} mm</b></span><span><b>${ms}</b> ms</span>`;
+    `<span>${T(orn?'Hälfte':'Druckteil')} <b>${(bb.max.x-bb.min.x).toFixed(1)} × ${(bb.max.y-bb.min.y).toFixed(1)} × ${(bb.max.z-bb.min.z).toFixed(1)} mm</b></span>`+
+    (orn?`<span>Ornament <b>${W.toFixed(0)} × ${(2*(h+thick)).toFixed(1)} ${T('mm dick')}</b></span>`:'')+
+    `<span>${T('Löcher')} <b>${holesF.length}</b></span><span>Vertices <b>${vcount.toLocaleString(LANG)}</b></span>`+
+    `<span>${T('Kuppel')} <b>${h.toFixed(1)} mm</b></span><span>${T('Pressform')} <b>${(mb.max.x-mb.min.x).toFixed(0)} × ${(mb.max.y-mb.min.y).toFixed(0)} mm</b></span><span><b>${ms}</b> ms</span>`;
   document.getElementById('busy').style.display='none';
 }
 
@@ -860,7 +878,7 @@ function applyColors(){
   M.plate.color.set(P.colPlate);M.frame.color.set(P.colFrame);M.design.color.set(P.colDesign);M.hard.color.set(P.colHard);
   M.mold.color.set(P.colMold);M.mold2.color.set(P.colMold).offsetHSL(0,0,0.07);
   const used=new Set();if(last)for(const p of last.parts)for(const[n]of p.geos)used.add(colKey(n));
-  document.getElementById('slotLegend').innerHTML=slotList().map((c,i)=>`<div><span class="sw" style="background:${c}"></span>Filament ${i+1}: ${COLS.filter(([k])=>P[k].toLowerCase()===c&&(!last||used.has(k))).map(x=>x[1]).join(', ')}</div>`).join('');
+  document.getElementById('slotLegend').innerHTML=slotList().map((c,i)=>`<div><span class="sw" style="background:${c}"></span>Filament ${i+1}: ${COLS.filter(([k])=>P[k].toLowerCase()===c&&(!last||used.has(k))).map(x=>T(x[1])).join(', ')}</div>`).join('');
   layout();
 }
 function mesh(g,m){const x=new THREE.Mesh(g,m.clone());x.material.wireframe=P.wire;return x;}
@@ -938,9 +956,9 @@ function addFontOption(key,label){
 }
 async function loadGoogleFont(){
   const{name,id}=gfId(document.getElementById('gfName').value);if(!id)return;
-  fontMsg.textContent='Lade „'+name+'“ …';
-  try{await getFont('gf:'+id);addFontOption('gf:'+id,name+' (Google)');fontMsg.textContent='„'+name+'“ geladen.';rebuild();}
-  catch(e){fontMsg.textContent='„'+name+'“ nicht gefunden. Bitte den genauen Namen von fonts.google.com verwenden.';}
+  fontMsg.textContent=TF('Lade „{0}“ …',name);
+  try{await getFont('gf:'+id);addFontOption('gf:'+id,name+' (Google)');fontMsg.textContent=TF('„{0}“ geladen.',name);rebuild();}
+  catch(e){fontMsg.textContent=TF('„{0}“ nicht gefunden. Bitte den genauen Namen von fonts.google.com verwenden.',name);}
 }
 document.getElementById('gfLoad').onclick=loadGoogleFont;
 document.getElementById('gfName').addEventListener('keydown',e=>{if(e.key==='Enter')loadGoogleFont();});
@@ -964,8 +982,8 @@ function addIconButton(name,front){
 ICONS.forEach(n=>addIconButton(n));markIcon();
 async function loadIconByName(){
   const n=document.getElementById('iconName').value.trim().toLowerCase().replace(/^mdi-/,'').replace(/\s+/g,'-');if(!n)return;
-  try{await getIcon(n);addIconButton(n,true);P.icon=n;markIcon();iconMsg.textContent='Icon „'+n+'“ geladen.';rebuild();}
-  catch(e){iconMsg.textContent='Icon „'+n+'“ nicht gefunden.';}
+  try{await getIcon(n);addIconButton(n,true);P.icon=n;markIcon();iconMsg.textContent=TF('Icon „{0}“ geladen.',n);rebuild();}
+  catch(e){iconMsg.textContent=TF('Icon „{0}“ nicht gefunden.',n);}
 }
 document.getElementById('iconLoad').onclick=loadIconByName;
 document.getElementById('iconName').addEventListener('keydown',e=>{if(e.key==='Enter')loadIconByName();});
@@ -999,13 +1017,13 @@ function stlData(geos){
   const g=BGU.mergeGeometries(geos.filter(Boolean).map(x=>{const c=x.index?x.toNonIndexed():x.clone();for(const k of Object.keys(c.attributes))if(k!=='position')c.deleteAttribute(k);return c;}));
   return new STLExporter().parse(new THREE.Mesh(g),{binary:true});
 }
-const slug=()=>(P.source==='text'?P.text.trim().replace(/[^\w-]+/g,'_').slice(0,24):P.source==='icon'?P.icon:P.source==='face'?'gesicht':'svg')||'thermoform';
+const slug=()=>(P.source==='text'?P.text.trim().replace(/[^\w-]+/g,'_').slice(0,24):P.source==='icon'?P.icon:P.source==='face'?T('gesicht'):'svg')||'thermoform';
 function stlButtons(){
   const box=document.getElementById('stlBtns');box.innerHTML='';
-  for(const p of last.parts){const b=document.createElement('button');b.className='btn ghost';b.textContent='STL: '+p.name.replace('ue','ü');
-    b.onclick=()=>download(`${slug()}_${p.file}.stl`,stlData(p.geos.map(g=>g[1])),'model/stl');box.appendChild(b);}
+  for(const p of last.parts){const b=document.createElement('button');b.className='btn ghost';b.textContent='STL: '+T(p.name.replace('ue','ü'));
+    b.onclick=()=>download(`${slug()}_${T(p.file)}.stl`,stlData(p.geos.map(g=>g[1])),'model/stl');box.appendChild(b);}
 }
-document.getElementById('exSettings').onclick=()=>download(`${slug()}_einstellungen.json`,JSON.stringify(P,null,2),'application/json');
+document.getElementById('exSettings').onclick=()=>download(`${slug()}_${T('einstellungen')}.json`,JSON.stringify(P,null,2),'application/json');
 document.getElementById('loadSettings').onchange=async e=>{
   const f=e.target.files[0];if(!f)return;Object.assign(P,JSON.parse(await f.text()));
   for(const list of Object.values(SLIDERS))for(const[k]of list){document.getElementById('s-'+k).value=P[k];document.getElementById('v-'+k).textContent=P[k];}
@@ -1048,13 +1066,13 @@ function build3mf(bbl){
   const plan=last.parts.map(p=>({p,ids:p.geos.map(([n])=>[id++,n])}));
   for(const{p,ids}of plan){
     const bb=new THREE.Box3();
-    p.geos.forEach(([n,g],i)=>{g.computeBoundingBox();bb.union(g.boundingBox);meshes.push(meshXml(ids[i][0],n,g,bbl?'':` pid="1000" pindex="${slotOf(n)-1}"`));});
+    p.geos.forEach(([n,g],i)=>{g.computeBoundingBox();bb.union(g.boundingBox);meshes.push(meshXml(ids[i][0],T(n),g,bbl?'':` pid="1000" pindex="${slotOf(n)-1}"`));});
     const w=bb.max.x-bb.min.x,h=bb.max.y-bb.min.y;
     if(x>0&&x+w>240){x=0;y-=rowH+8;rowH=0;}
     const top=id++;
-    asm.push(`<object id="${top}" type="model" name="${p.name}"><components>${ids.map(([i])=>`<component ${bbl?'p:path="/3D/Objects/object_1.model" ':''}objectid="${i}" transform="1 0 0 0 1 0 0 0 1 0 0 0"/>`).join('')}</components></object>`);
+    asm.push(`<object id="${top}" type="model" name="${T(p.name)}"><components>${ids.map(([i])=>`<component ${bbl?'p:path="/3D/Objects/object_1.model" ':''}objectid="${i}" transform="1 0 0 0 1 0 0 0 1 0 0 0"/>`).join('')}</components></object>`);
     items.push(`<item objectid="${top}" transform="1 0 0 0 1 0 0 0 1 ${(8+x-bb.min.x).toFixed(3)} ${(248+y-bb.max.y).toFixed(3)} ${(-bb.min.z).toFixed(3)}" printable="1"/>`);
-    cfg.push(`<object id="${top}"><metadata key="name" value="${p.name}"/><metadata key="extruder" value="${slotOf(ids[0][1])}"/>${ids.map(([i,n])=>`<part id="${i}" subtype="normal_part"><metadata key="name" value="${n}"/><metadata key="matrix" value="1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"/><metadata key="extruder" value="${slotOf(n)}"/></part>`).join('')}</object>`);
+    cfg.push(`<object id="${top}"><metadata key="name" value="${T(p.name)}"/><metadata key="extruder" value="${slotOf(ids[0][1])}"/>${ids.map(([i,n])=>`<part id="${i}" subtype="normal_part"><metadata key="name" value="${T(n)}"/><metadata key="matrix" value="1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"/><metadata key="extruder" value="${slotOf(n)}"/></part>`).join('')}</object>`);
     inst.push(`<model_instance><metadata key="object_id" value="${top}"/><metadata key="instance_id" value="0"/></model_instance>`);
     x+=w+8;rowH=Math.max(rowH,h);
   }
@@ -1079,6 +1097,9 @@ document.getElementById('ex3mf').onclick=()=>last&&download(`${slug()}_thermofor
 document.getElementById('ex3mfGeneric').onclick=()=>last&&download(`${slug()}_thermoform.3mf`,build3mf(false),'model/3mf');
 window.__tf={P,stlData,build3mf,indexedMesh,camera,controls,root,get last(){return last;}};
 
+const langSel=document.getElementById('lang');langSel.value=langPref;
+langSel.onchange=()=>{langPref=langSel.value;try{localStorage.setItem('tf-lang',langPref);}catch(e){}LANG=langPref==='auto'?sysLang():langPref;translateDom();build();};
+translateDom();
 build();
 </script>
 </body>
