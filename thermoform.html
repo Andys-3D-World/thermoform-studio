@@ -8,8 +8,10 @@
 :root{--bg:#121316;--panel:#1a1b1f;--line:#2a2c33;--text:#e7e8ec;--muted:#8b8f9a;--accent:#5b8cff;--accent2:#2f4a8a}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:13px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif}
-#app{display:grid;grid-template-columns:330px 1fr;height:100%}
-aside{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;padding:16px 18px 24px}
+#app{display:grid;grid-template-columns:310px minmax(0,1fr) 310px;height:100%}
+aside{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;padding:16px 18px 24px;min-height:0}
+#right{border-right:0;border-left:1px solid var(--line);padding-top:6px}
+#right details:first-child{border-top:0}
 h1{font-size:20px;margin:0 0 2px}
 .sub{color:var(--muted);margin:0 0 14px}
 details{border-top:1px solid var(--line);padding:10px 0}
@@ -52,7 +54,9 @@ canvas{display:block}
 .icons button{aspect-ratio:1;background:#0e0f12;border:1px solid var(--line);border-radius:8px;cursor:pointer;padding:5px}
 .icons button.on{border-color:var(--accent);background:#1b2540}
 .icons img{width:100%;height:100%;filter:invert(.85);display:block}
-@media (max-width:760px){#app{grid-template-columns:1fr;grid-template-rows:55vh auto}aside{order:2}main{order:1}}
+@media (max-width:1150px){#app{grid-template-columns:250px minmax(0,1fr) 250px}aside{padding:14px 12px 20px}}
+@media (max-width:900px){#app{grid-template-columns:300px minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr)}main{grid-column:2;grid-row:1/3}aside{grid-column:1}#right{border-left:0;border-right:1px solid var(--line);border-top:1px solid var(--line)}}
+@media (max-width:760px){html,body{height:auto}#app{display:flex;flex-direction:column;height:auto}main{order:1;height:55vh}aside{order:2;overflow:visible;border-right:0}#right{order:3}}
 </style>
 <script type="importmap">
 {"imports":{
@@ -100,27 +104,6 @@ canvas{display:block}
     <div id="sl-shape"></div>
   </details>
 
-  <details open><summary>Rahmen &amp; Verbindung</summary>
-    <div class="row"><label>Aufbau</label>
-      <select id="mode">
-        <option value="ornament">Zweiteilig: Schraubkappe + C-Clip</option>
-        <option value="single">Einteilig: nur Öse</option>
-      </select></div>
-    <div id="sl-frame"></div>
-    <div id="ornBox">
-      <div id="sl-thread"></div>
-      <div class="toggle">Design auch auf der Rückseite <input type="checkbox" id="backDesign"></div>
-      <div class="hint">Oben halten die zwei Gewindehälften mit der Schraubkappe zusammen. Der C-Clip greift mit seinen Nasen hinter beide Rahmen; dafür ist die Platte dort ausgeklinkt. Kappe ab: um den Clip aufklappen.</div>
-      <div class="hint" id="asymMsg" style="color:#ffb347"></div>
-      <div class="hint" id="studMsg" style="color:#ffb347"></div>
-      <div class="hint" id="clipMsg" style="color:#ffb347"></div>
-    </div>
-    <div id="singleBox" style="display:none">
-      <div class="toggle">Öse zum Aufhängen <input type="checkbox" id="loop" checked></div>
-      <div id="sl-loop"></div>
-    </div>
-  </details>
-
   <details open><summary>Lochmuster</summary>
     <div class="row"><label>Muster</label>
       <select id="hole">
@@ -142,6 +125,33 @@ canvas{display:block}
       </select></div>
     <div class="toggle">Löcher an Rand und Design anschneiden <input type="checkbox" id="clipHoles" checked></div>
     <div id="sl-lattice"></div>
+  </details>
+</aside>
+<main id="view">
+  <div id="busy">Berechne …</div>
+  <div id="tools"><button id="resetCam">Kamera</button></div>
+  <div id="stats"></div>
+</main>
+<aside id="right">
+  <details open><summary>Rahmen &amp; Verbindung</summary>
+    <div class="row"><label>Aufbau</label>
+      <select id="mode">
+        <option value="ornament">Zweiteilig: Schraubkappe + C-Clip</option>
+        <option value="single">Einteilig: nur Öse</option>
+      </select></div>
+    <div id="sl-frame"></div>
+    <div id="ornBox">
+      <div id="sl-thread"></div>
+      <div class="toggle">Design auch auf der Rückseite <input type="checkbox" id="backDesign"></div>
+      <div class="hint">Oben halten die zwei Gewindehälften mit der Schraubkappe zusammen. Der C-Clip greift mit seinen Nasen hinter beide Rahmen; dafür ist die Platte dort ausgeklinkt. Kappe ab: um den Clip aufklappen.</div>
+      <div class="hint" id="asymMsg" style="color:#ffb347"></div>
+      <div class="hint" id="studMsg" style="color:#ffb347"></div>
+      <div class="hint" id="clipMsg" style="color:#ffb347"></div>
+    </div>
+    <div id="singleBox" style="display:none">
+      <div class="toggle">Öse zum Aufhängen <input type="checkbox" id="loop" checked></div>
+      <div id="sl-loop"></div>
+    </div>
   </details>
 
   <details><summary>Umformung &amp; Formen</summary>
@@ -171,11 +181,6 @@ canvas{display:block}
     <div class="row file"><label>Einstellungen laden</label><input type="file" id="loadSettings" accept=".json"></div>
   </details>
 </aside>
-<main id="view">
-  <div id="busy">Berechne …</div>
-  <div id="tools"><button id="resetCam">Kamera</button></div>
-  <div id="stats"></div>
-</main>
 </div>
 
 <script type="module">
