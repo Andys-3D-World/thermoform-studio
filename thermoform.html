@@ -180,8 +180,10 @@ canvas{display:block}
   </details>
 
   <details open><summary>Export</summary>
+    <div class="row"><label>Drucker für Bambu Studio</label><select id="bblPrinter"></select></div>
+    <div class="hint" id="bblHint"></div>
     <button class="btn" id="ex3mf">3MF für Bambu Studio / Orca</button>
-    <div class="hint">Projektdatei: jedes Teil ist schon seinem Filament-Platz zugewiesen, im Slicer muss nichts mehr eingefärbt werden. Nach dem Öffnen einmal „Anordnen" drücken. Im Slicer müssen mindestens so viele Filamente angelegt sein wie oben Plätze stehen, sonst fallen die höheren Plätze auf Filament 1 zurück.</div>
+    <div class="hint">Projektdatei: jedes Teil ist schon seinem Filament-Platz zugewiesen. Nach dem Öffnen einmal „Anordnen" drücken. Ohne gewählten Drucker müssen im Slicer mindestens so viele Filamente angelegt sein wie oben Plätze stehen, sonst fallen die höheren Plätze auf Filament 1 zurück.</div>
     <button class="btn ghost" id="ex3mfGeneric">3MF für andere Slicer</button>
     <div id="stlBtns"></div>
     <button class="btn ghost" id="exSettings">Einstellungen speichern (.json)</button>
@@ -211,6 +213,10 @@ Object.assign(EN,{"Öse an der Kappe drehen":"Rotate eyelet on the cap"});
 Object.assign(EN,{"Eigene Form: Lücken füllen & glätten":"Own shape: fill gaps & smooth","Es wird der äußere Umriss übernommen. Dünne Teile und Lücken (Beine, Fäden, Zacken) lassen sich mit „Lücken füllen & glätten\" zu einer druckbaren Fläche schließen.":"The outer silhouette is used. Thin parts and gaps (legs, threads, spikes) can be closed into a printable area with \"Fill gaps & smooth\"."});
 Object.assign(EN,{"Die Form ist an manchen Stellen zu eng: Glättung automatisch auf {0} % erhöht.":"The shape is too narrow in places: smoothing raised to {0} % automatically.","Diese Form ist zu verwinkelt für fehlerfreie Pressformen. „Lücken füllen & glätten“ weiter erhöhen oder die Vorlage vereinfachen.":"This shape is too intricate for clean molds. Increase \"Fill gaps & smooth\" or simplify the source."});
 Object.assign(EN,{"Eigene Form: dünne Teile behalten":"Own shape: keep thin parts","An: Beine, Zacken und andere schmale Teile bleiben erhalten. Sie behalten den normalen Rahmen, die Fläche dazwischen bleibt flach und geschlossen; Muster und Wölbung bekommen nur die großen Flächen. Aus: Schmale Teile werden entfernt.":"On: legs, spikes and other narrow parts are kept. They keep the normal frame, the area in between stays flat and closed; only the large areas get pattern and dome. Off: narrow parts are removed.","Eigene Form: ohne Muster und Wölbung bis Breite":"Own shape: no pattern or dome up to width"});
+Object.assign(EN,{"Drucker für Bambu Studio":"Printer for Bambu Studio","Nicht festlegen (Farben aus dem Slicer)":"Not set (colors from the slicer)",
+"Die Datei bringt deine Farben mit und stellt in Bambu Studio diesen Drucker mit Standardprofil (0,20 mm, PLA Basic) ein. Danach je Platz dein echtes Filament wählen.":"The file carries your colors and sets this printer with its standard profile (0.20 mm, PLA Basic) in Bambu Studio. Then pick your real filament for each slot.",
+"Ohne Drucker bleiben deine Profile in Bambu Studio unverändert, aber die Farben kommen von den dort angelegten Filamenten, nicht aus der Datei.":"Without a printer your profiles in Bambu Studio stay untouched, but the colors come from the filaments set up there, not from the file.",
+"Projektdatei: jedes Teil ist schon seinem Filament-Platz zugewiesen. Nach dem Öffnen einmal „Anordnen\" drücken. Ohne gewählten Drucker müssen im Slicer mindestens so viele Filamente angelegt sein wie oben Plätze stehen, sonst fallen die höheren Plätze auf Filament 1 zurück.":"Project file: every part is already assigned to its filament slot. Press \"Arrange\" once after opening. Without a chosen printer the slicer needs at least as many filaments as there are slots above, otherwise the higher slots fall back to filament 1."});
 let langPref='auto';try{langPref=localStorage.getItem('tf-lang')||'auto';}catch(e){}
 const sysLang=()=>((navigator.languages&&navigator.languages[0])||navigator.language||'en').toLowerCase().startsWith('de')?'de':'en';
 let LANG=langPref==='auto'?sysLang():langPref;
@@ -1298,13 +1304,38 @@ function build3mf(bbl,proj){
   const z={};for(const[k,v]of Object.entries(files))z[k]=strToU8(v);
   return zipSync(z);
 }
-document.getElementById('ex3mf').onclick=()=>last&&download(`${slug()}_thermoform_bambu.3mf`,build3mf(true),'model/3mf');
+// Bambu-Drucker (0,4-mm-Düse) mit Standard-Prozess und Standard-PLA aus den Bambu-Studio-Systemprofilen (Stand 02.09).
+// Nennt die Projektdatei diese Profile, übernimmt Bambu Studio auch die Filamentfarben aus der Datei.
+const BBL_PRINTERS=[['A1 mini','Bambu Lab A1 mini 0.4 nozzle','0.20mm Standard @BBL A1M','Bambu PLA Basic @BBL A1M'],['A1','Bambu Lab A1 0.4 nozzle','0.20mm Standard @BBL A1','Bambu PLA Basic @BBL A1'],
+  ['A2L','Bambu Lab A2L 0.4 nozzle','0.20mm Standard @BBL A2L','Bambu PLA Basic @BBL A2L 0.4 nozzle'],['P1P','Bambu Lab P1P 0.4 nozzle','0.20mm Standard @BBL P1P','Bambu PLA Basic @BBL P1P'],
+  ['P1S','Bambu Lab P1S 0.4 nozzle','0.20mm Standard @BBL X1C','Bambu PLA Basic @BBL P1S 0.4 nozzle'],['P2S','Bambu Lab P2S 0.4 nozzle','0.20mm Standard @BBL P2S','Bambu PLA Basic @BBL P2S'],
+  ['X1','Bambu Lab X1 0.4 nozzle','0.20mm Standard @BBL X1C','Bambu PLA Basic @BBL X1'],['X1 Carbon','Bambu Lab X1 Carbon 0.4 nozzle','0.20mm Standard @BBL X1C','Bambu PLA Basic @BBL X1C'],
+  ['X1E','Bambu Lab X1E 0.4 nozzle','0.20mm Standard @BBL X1C','Bambu PLA Basic @BBL X1C'],['X2D','Bambu Lab X2D 0.4 nozzle','0.20mm Standard @BBL X2D','Bambu PLA Basic @BBL X2D 0.4 nozzle'],
+  ['H2S','Bambu Lab H2S 0.4 nozzle','0.20mm Standard @BBL H2S','Bambu PLA Basic @BBL H2S'],['H2C','Bambu Lab H2C 0.4 nozzle','0.20mm Standard @BBL H2C','Bambu PLA Basic @BBL H2C'],
+  ['H2D','Bambu Lab H2D 0.4 nozzle','0.20mm Standard @BBL H2D','Bambu PLA Basic @BBL H2D'],['H2D Pro','Bambu Lab H2D Pro 0.4 nozzle','0.20mm Standard @BBL H2DP','Bambu PLA Basic @BBL H2DP'],
+  ['H3C','Bambu Lab H3C 0.4 nozzle','0.20mm Standard @BBL H3C','Bambu PLA Basic @BBL H3C']];
+const bblSel=document.getElementById('bblPrinter'),bblHint=document.getElementById('bblHint');
+function bblFill(){
+  const cur=bblSel.value||(()=>{try{return localStorage.getItem('tf-printer')||'';}catch(e){return'';}})();
+  bblSel.innerHTML='';const o0=document.createElement('option');o0.value='';o0.textContent=T('Nicht festlegen (Farben aus dem Slicer)');bblSel.appendChild(o0);
+  for(const[l]of BBL_PRINTERS){const o=document.createElement('option');o.value=l;o.textContent='Bambu Lab '+l;bblSel.appendChild(o);}
+  bblSel.value=BBL_PRINTERS.some(x=>x[0]===cur)?cur:'';
+  bblHint.textContent=bblSel.value?T('Die Datei bringt deine Farben mit und stellt in Bambu Studio diesen Drucker mit Standardprofil (0,20 mm, PLA Basic) ein. Danach je Platz dein echtes Filament wählen.')
+    :T('Ohne Drucker bleiben deine Profile in Bambu Studio unverändert, aber die Farben kommen von den dort angelegten Filamenten, nicht aus der Datei.');
+}
+bblSel.onchange=()=>{try{localStorage.setItem('tf-printer',bblSel.value);}catch(e){}bblFill();};
+function bblProject(){
+  const pr=BBL_PRINTERS.find(x=>x[0]===bblSel.value);if(!pr)return null;const sl=slotList(),n=sl.length;
+  return{filament_colour:sl.map(c=>c.toUpperCase()),filament_settings_id:Array(n).fill(pr[3]),print_settings_id:pr[2],printer_settings_id:pr[1],
+    different_settings_to_system:Array(n+2).fill(''),from:'project',name:'project_settings',version:'02.07.01.57'};
+}
+document.getElementById('ex3mf').onclick=()=>last&&download(`${slug()}_thermoform_bambu.3mf`,build3mf(true,bblProject()),'model/3mf');
 document.getElementById('ex3mfGeneric').onclick=()=>last&&download(`${slug()}_thermoform.3mf`,build3mf(false),'model/3mf');
-window.__tf={loadShapeFile,P,stlData,build3mf,indexedMesh,camera,controls,root,get last(){return last;}};
+window.__tf={bblProject,loadShapeFile,P,stlData,build3mf,indexedMesh,camera,controls,root,get last(){return last;}};
 
 const langSel=document.getElementById('lang');langSel.value=langPref;
-langSel.onchange=()=>{langPref=langSel.value;try{localStorage.setItem('tf-lang',langPref);}catch(e){}LANG=langPref==='auto'?sysLang():langPref;translateDom();build();};
-translateDom();
+langSel.onchange=()=>{langPref=langSel.value;try{localStorage.setItem('tf-lang',langPref);}catch(e){}LANG=langPref==='auto'?sysLang():langPref;translateDom();bblFill();build();};
+translateDom();bblFill();
 build();
 </script>
 </body>
