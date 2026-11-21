@@ -103,6 +103,8 @@ canvas{display:block}
     <div class="row shapes" id="shapes"></div>
     <div class="row file"><label>Eigene Form (SVG oder Bild)</label><input type="file" id="shapeFile" accept=".svg,.png,.jpg,.jpeg,.webp,.gif"></div>
     <div class="hint" id="shapeMsg">Es wird der äußere Umriss übernommen. Dünne Teile und Lücken (Beine, Fäden, Zacken) lassen sich mit „Lücken füllen &amp; glätten" zu einer druckbaren Fläche schließen.</div>
+    <div class="toggle">Eigene Form: dünne Teile behalten <input type="checkbox" id="thinKeep" checked></div>
+    <div class="hint">An: Beine, Zacken und andere schmale Teile bleiben erhalten und werden massiv (Rahmen ohne Gitter). Aus: Sie werden entfernt, übrig bleibt die Fläche, die sich wölben lässt.</div>
     <div id="sl-shape"></div>
   </details>
 
@@ -205,6 +207,7 @@ Object.assign(EN,{"Die Form hat keine gerade Stelle für den Clip, deshalb wurde
 Object.assign(EN,{"Öse an der Kappe drehen":"Rotate eyelet on the cap"});
 Object.assign(EN,{"Eigene Form: Lücken füllen & glätten":"Own shape: fill gaps & smooth","Es wird der äußere Umriss übernommen. Dünne Teile und Lücken (Beine, Fäden, Zacken) lassen sich mit „Lücken füllen & glätten\" zu einer druckbaren Fläche schließen.":"The outer silhouette is used. Thin parts and gaps (legs, threads, spikes) can be closed into a printable area with \"Fill gaps & smooth\"."});
 Object.assign(EN,{"Die Form ist an manchen Stellen zu eng: Glättung automatisch auf {0} % erhöht.":"The shape is too narrow in places: smoothing raised to {0} % automatically.","Diese Form ist zu verwinkelt für fehlerfreie Pressformen. „Lücken füllen & glätten“ weiter erhöhen oder die Vorlage vereinfachen.":"This shape is too intricate for clean molds. Increase \"Fill gaps & smooth\" or simplify the source."});
+Object.assign(EN,{"Eigene Form: dünne Teile behalten":"Own shape: keep thin parts","An: Beine, Zacken und andere schmale Teile bleiben erhalten und werden massiv (Rahmen ohne Gitter). Aus: Sie werden entfernt, übrig bleibt die Fläche, die sich wölben lässt.":"On: legs, spikes and other narrow parts are kept and become solid (frame without lattice). Off: they are removed, leaving the area that can be domed."});
 let langPref='auto';try{langPref=localStorage.getItem('tf-lang')||'auto';}catch(e){}
 const sysLang=()=>((navigator.languages&&navigator.languages[0])||navigator.language||'en').toLowerCase().startsWith('de')?'de':'en';
 let LANG=langPref==='auto'?sysLang():langPref;
@@ -231,7 +234,7 @@ const P = {
   formH:12, gap:0.3, moldWall:5, moldBase:4, rimSeat:0, lipW:1.5,
   showFlat:true, showFormed:true, showMolds:true, assembled:true, wire:false,
   colPlate:'#f5c518', colFrame:'#3d414c', colDesign:'#3d414c', colHard:'#3d414c', colMold:'#8a8e98',
-  customShape:null, shapeSmooth:6, eyeRot:90
+  customShape:null, shapeSmooth:1, thinKeep:true, eyeRot:90
 };
 let customVer=0;
 const COLS=[['colPlate','Platte'],['colFrame','Rahmen & Gewinde'],['colDesign','Design'],['colHard','Kappe & Clip'],['colMold','Formen']];
@@ -245,7 +248,7 @@ const SLIDERS = {
   'sl-loop':[['loopD','Ösen-Außen-Ø',5,20,0.5,'mm'],['loopHole','Loch-Ø',1.5,12,0.5,'mm']],
   'sl-form':[['formH','Formhöhe (Kuppel)',2,40,0.5,'mm'],['pillow','Kissenform (flach oben, steiler Rand)',0,100,5,'%'],['flat','Flache Mitte',0,85,5,'%'],['gap','Passungsspiel',0,1.5,0.05,'mm'],['moldWall','Formwand',2,15,0.5,'mm'],['moldBase','Formsockel',2,15,0.5,'mm'],['lipW','Lippe zwischen Mulde und Rahmen-Nut',0,4,0.1,'mm'],['rimSeat','Zusätzliche Tasche in der Kuppelform',0,3,0.1,'mm']]
 };
-const CHECKS=['autoFit','clipHoles','loop','backDesign','showFlat','showFormed','showMolds','assembled','wire'];
+const CHECKS=['thinKeep','autoFit','clipHoles','loop','backDesign','showFlat','showFormed','showMolds','assembled','wire'];
 const FONTS = {
   'Helvetiker Bold':'helvetiker_bold','Helvetiker':'helvetiker_regular','Optimer Bold':'optimer_bold',
   'Gentilis Bold':'gentilis_bold','Droid Sans Bold':'droid/droid_sans_bold','Droid Serif Bold':'droid/droid_serif_bold'
@@ -505,12 +508,12 @@ function traceMask(m,W2,H2){
 // pct = "Lücken füllen & glätten" in % der Bildgröße: erst Lücken schließen, dann dünne Fäden und Spitzen entfernen
 // needMm = halbe Mindestbreite in mm (Rahmen + Lippe): schmalere Teile würden die Wölbung abschnüren und werden entfernt
 function outlineFromMask(src,pct,needMm){
-  const R=pct/100*src.L,Ro=Math.max(R/3,needMm/P.width*src.w0);let m=largestPart(src.m,src.w,src.h);
+  const R=pct/100*src.L,Ro=Math.max(R/3,(P.thinKeep?0.45:needMm)/P.width*src.w0);/* thinKeep: dünne Teile (Beine) behalten, sie werden dann massiv statt gewölbt */let m=largestPart(src.m,src.w,src.h);
   if(R>=0.5)m=morph(morph(m,src.w,src.h,R,true),src.w,src.h,R,false);
   if(Ro>=0.5){m=morph(morph(m,src.w,src.h,Ro,false),src.w,src.h,Ro,true);m=largestPart(m,src.w,src.h);}
   return finishOutline(chaikin(chaikin(simplifyRing(traceMask(m,src.w,src.h),0.9))));
 }
-const customKey=()=>[P.shapeSmooth,P.width,P.borderW,P.lipW,P.mode].join('_');
+const customKey=()=>[P.thinKeep,P.shapeSmooth,P.width,P.borderW,P.lipW,P.mode].join('_');
 function nonManifold(geo){ // Kanten, die nicht genau zweimal (hin und zurück) benutzt werden
   const{tris}=indexedMesh(geo),m=new Map();
   for(let i=0;i<tris.length;i+=3)for(let j=0;j<3;j++){const a=tris[i+j],b=tris[i+(j+1)%3],k=a<b?a*4194304+b:b*4194304+a;m.set(k,(m.get(k)||0)+(a<b?1:-1)+1000);}
@@ -998,7 +1001,7 @@ async function build(){
 
   if(P.shape==='custom'&&customSrc){ // eigene Form: Netze prüfen; bei Fehlern die Glättung schrittweise erhöhen und neu bauen
     const badM=nonManifold(maleGeo)+nonManifold(femaleGeo)+nonManifold(plateGeo)+(backGeo&&backGeo!==plateGeo?nonManifold(backGeo):0);
-    if(badM&&(customSrc.bump||0)<10){customSrc.bump=(customSrc.bump||0)+1;try{customFromSrc();shapeButton('custom');}catch(e){console.error(e);}
+    if(badM&&(customSrc.bump||0)<10){customSrc.bump=(customSrc.bump||0)+0.5;try{customFromSrc();shapeButton('custom');}catch(e){console.error(e);}
       shapeMsg.textContent=TF('Die Form ist an manchen Stellen zu eng: Glättung automatisch auf {0} % erhöht.',P.shapeSmooth+customSrc.bump);build();return;}
     if(badM)shapeMsg.textContent=T('Diese Form ist zu verwinkelt für fehlerfreie Pressformen. „Lücken füllen & glätten“ weiter erhöhen oder die Vorlage vereinfachen.');
   }
@@ -1164,7 +1167,7 @@ async function loadShapeFile(f){
     else src=await maskFromImage(f);
     const old=customSrc;src.bump=0;customSrc=src;try{customFromSrc();}catch(e){customSrc=old;throw e;}
     P.shape='custom';shapeButton('custom');markShape();shapeMsg.textContent=TF('Eigene Form „{0}“ geladen.',f.name);rebuild();
-  }catch(err){shapeMsg.textContent=T('In der Datei wurde kein brauchbarer Umriss gefunden. Bitte eine gefüllte, geschlossene Form verwenden.');}
+  }catch(err){console.error(err);shapeMsg.textContent=T('In der Datei wurde kein brauchbarer Umriss gefunden. Bitte eine gefüllte, geschlossene Form verwenden.');}
 }
 document.getElementById('shapeFile').onchange=e=>{const f=e.target.files[0];if(f)loadShapeFile(f);};
 for(const k of CHECKS){
