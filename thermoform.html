@@ -202,6 +202,7 @@ const EN={"Flache Gitterplatten drucken, erwärmen, zwischen den Formen wölben,
 Object.assign(EN,{"Eigene Form (SVG oder Bild)":"Own shape (SVG or image)","Es wird der äußere Umriss übernommen. Am besten einfache, geschlossene Formen ohne dünne Stellen.":"The outer silhouette is used. Simple closed shapes without thin parts work best.","Eigene Form „{0}“ geladen.":"Own shape \"{0}\" loaded.","In der Datei wurde kein brauchbarer Umriss gefunden. Bitte eine gefüllte, geschlossene Form verwenden.":"No usable outline found in the file. Please use a filled, closed shape."});
 Object.assign(EN,{"Rahmen zu niedrig für einen bündigen Clip: Der Clip steht etwas über. Rahmenhöhe erhöhen. ":"Frame too low for a flush clip: the clip sticks out a little. Increase the frame height. "});
 Object.assign(EN,{"Die Form hat keine gerade Stelle für den Clip, deshalb wurde eine kleine gerade Lasche angesetzt. ":"The shape has no straight spot for the clip, so a small straight tab was added. "});
+Object.assign(EN,{"Öse an der Kappe drehen":"Rotate eyelet on the cap"});
 let langPref='auto';try{langPref=localStorage.getItem('tf-lang')||'auto';}catch(e){}
 const sysLang=()=>((navigator.languages&&navigator.languages[0])||navigator.language||'en').toLowerCase().startsWith('de')?'de':'en';
 let LANG=langPref==='auto'?sysLang():langPref;
@@ -228,7 +229,7 @@ const P = {
   formH:12, gap:0.3, moldWall:5, moldBase:4, rimSeat:0, lipW:1.5,
   showFlat:true, showFormed:true, showMolds:true, assembled:true, wire:false,
   colPlate:'#f5c518', colFrame:'#3d414c', colDesign:'#3d414c', colHard:'#3d414c', colMold:'#8a8e98',
-  customShape:null
+  customShape:null, eyeRot:90
 };
 let customVer=0;
 const COLS=[['colPlate','Platte'],['colFrame','Rahmen & Gewinde'],['colDesign','Design'],['colHard','Kappe & Clip'],['colMold','Formen']];
@@ -237,7 +238,7 @@ const SLIDERS = {
   'sl-design':[['designSize','Designgröße',20,100,1,'%'],['designY','Vertikaler Versatz',-30,30,0.5,'mm'],['designH','Designhöhe (erhaben)',0.4,4,0.1,'mm']],
   'sl-shape':[['width','Breite',25,180,1,'mm'],['corner','Eckenrundung',0,20,1,'%'],['rim','Randbreite (flach)',1,8,0.1,'mm'],['plateT','Plattendicke',0.4,3,0.1,'mm']],
   'sl-frame':[['borderW','Rahmenbreite',0,4,0.1,'mm'],['borderH','Rahmenhöhe',0.8,5,0.1,'mm']],
-  'sl-thread':[['studD','Gewinde-Ø',6,16,0.5,'mm'],['pitch','Gewindesteigung',1,3,0.25,'mm'],['studL','Gewindelänge',4,14,0.5,'mm'],['studPos','Gewinde-Position (0° = oben)',-150,150,5,'°'],['threadGap','Gewindespiel',0.05,0.6,0.05,'mm'],['clipLen','Clip-Länge',4,20,0.5,'mm'],['clipPos','Clip-Position (0° = unten)',-150,150,5,'°']],
+  'sl-thread':[['studD','Gewinde-Ø',6,16,0.5,'mm'],['pitch','Gewindesteigung',1,3,0.25,'mm'],['studL','Gewindelänge',4,14,0.5,'mm'],['studPos','Gewinde-Position (0° = oben)',-150,150,5,'°'],['threadGap','Gewindespiel',0.05,0.6,0.05,'mm'],['eyeRot','Öse an der Kappe drehen',0,180,15,'°'],['clipLen','Clip-Länge',4,20,0.5,'mm'],['clipPos','Clip-Position (0° = unten)',-150,150,5,'°']],
   'sl-lattice':[['cell','Lochabstand',2,12,0.1,'mm'],['wall','Stegbreite',0.4,3,0.05,'mm'],['holeAngle','Drehung',0,90,5,'°'],['designMargin','Abstand zum Design',0,4,0.1,'mm']],
   'sl-loop':[['loopD','Ösen-Außen-Ø',5,20,0.5,'mm'],['loopHole','Loch-Ø',1.5,12,0.5,'mm']],
   'sl-form':[['formH','Formhöhe (Kuppel)',2,40,0.5,'mm'],['pillow','Kissenform (flach oben, steiler Rand)',0,100,5,'%'],['flat','Flache Mitte',0,85,5,'%'],['gap','Passungsspiel',0,1.5,0.05,'mm'],['moldWall','Formwand',2,15,0.5,'mm'],['moldBase','Formsockel',2,15,0.5,'mm'],['lipW','Lippe zwischen Mulde und Rahmen-Nut',0,4,0.1,'mm'],['rimSeat','Zusätzliche Tasche in der Kuppelform',0,3,0.1,'mm']]
@@ -567,7 +568,7 @@ function studGeo(D,L,p,phase,y0){ // halber Zylinder, flache Seite auf z=0, Achs
   for(let i=1;i<nT;i++){I.push(id(0,0),id(i,0),id(i+1,0),id(0,nL),id(i+1,nL),id(i,nL));}
   return mk(V,I);
 }
-function capGeo(D,L,p,gap){ // Öffnung bei z=0, Öse oben
+function capGeo(D,L,p,gap,rot){ // Öffnung bei z=0, Öse oben
   const nP=64,Hc=L+0.8,H=Hc+1.8,nZ=Math.max(8,Math.round(Hc/p*16)),Ro=D/2+gap+2.4,V=[],I=[];
   const inn=(i,j)=>j*nP+(i%nP);
   for(let j=0;j<=nZ;j++){const z=Hc*j/nZ;for(let i=0;i<nP;i++){const ps=i/nP*Math.PI*2,r=threadR(D,p,z/p+ps/(2*Math.PI))+gap+(z<0.8?(0.8-z)*0.6:0);V.push(r*Math.cos(ps),r*Math.sin(ps),z);}}
@@ -582,7 +583,7 @@ function capGeo(D,L,p,gap){ // Öffnung bei z=0, Öse oben
     I.push(tc,ot0+i,ot0+i2);
   }
   const s=new THREE.Shape();s.absarc(0,0,4.6,0,Math.PI*2,false);const hp=new THREE.Path();hp.absarc(0,0,2.3,0,Math.PI*2,true);s.holes.push(hp);
-  const lg=new THREE.ExtrudeGeometry(s,{depth:2.4,bevelEnabled:false,curveSegments:24});lg.rotateX(Math.PI/2);lg.translate(0,1.2,H+3.4);
+  const lg=new THREE.ExtrudeGeometry(s,{depth:2.4,bevelEnabled:false,curveSegments:24});lg.rotateX(Math.PI/2);lg.translate(0,1.2,0);lg.rotateZ((rot||0)*Math.PI/180);lg.translate(0,0,H+3.4);
   return merge([mk(V,I),lg]);
 }
 // C-Clip (Querschnitt wie beim Vorbild): Hohlraum für beide Rahmen, Öffnung nur so breit wie zwei Platten,
@@ -910,7 +911,7 @@ async function build(){
   maleGeo.computeBoundingBox();const mb=maleGeo.boundingBox,Ro=Math.max(mb.max.x-mb.min.x,mb.max.y-mb.min.y)/2;
 
   // Kappe + Clip
-  const cap=orn?capGeo(P.studD,P.studL,P.pitch,P.threadGap):null;
+  const cap=orn?capGeo(P.studD,P.studL,P.pitch,P.threadGap,P.eyeRot):null;
 
   // Design der Rückseite: ungespiegelt lesbar, aber an der gespiegelten Stelle
   let designB=null;if(orn&&P.backDesign&&designGeo){designB=designGeo.clone();designB.translate(-dsh0,0,0);}
