@@ -12,4 +12,6 @@ Generator im Browser für 3D-druckbare Gitterplatten, die warm zwischen zwei For
 
 Alles läuft lokal im Browser, es wird nichts hochgeladen.
 
+Das hier ist die Vollversion. Für den Generator auf MakerWorld (Parametric Model Maker) gibt es eine Lite-Version als OpenSCAD-Skript mit 8 Formen, 5 Lochmustern und Text; OpenSCAD setzt dort Grenzen, deshalb ist sie kleiner.
+
 Hinweis: Passungen (Gewinde, Clip) sind bisher nur rechnerisch geprüft, nicht gedruckt.

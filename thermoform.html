@@ -1331,7 +1331,7 @@ function bblProject(){
 }
 document.getElementById('ex3mf').onclick=()=>last&&download(`${slug()}_thermoform_bambu.3mf`,build3mf(true,bblProject()),'model/3mf');
 document.getElementById('ex3mfGeneric').onclick=()=>last&&download(`${slug()}_thermoform.3mf`,build3mf(false),'model/3mf');
-window.__tf={bblProject,loadShapeFile,P,stlData,build3mf,indexedMesh,camera,controls,root,get last(){return last;}};
+window.__tf={renderer,scene,bblProject,loadShapeFile,P,stlData,build3mf,indexedMesh,camera,controls,root,get last(){return last;}};
 
 const langSel=document.getElementById('lang');langSel.value=langPref;
 langSel.onchange=()=>{langPref=langSel.value;try{localStorage.setItem('tf-lang',langPref);}catch(e){}LANG=langPref==='auto'?sysLang():langPref;translateDom();bblFill();build();};
