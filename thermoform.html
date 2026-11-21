@@ -101,6 +101,8 @@ canvas{display:block}
 
   <details open><summary>Form</summary>
     <div class="row shapes" id="shapes"></div>
+    <div class="row file"><label>Eigene Form (SVG oder Bild)</label><input type="file" id="shapeFile" accept=".svg,.png,.jpg,.jpeg,.webp,.gif"></div>
+    <div class="hint" id="shapeMsg">Es wird der äußere Umriss übernommen. Am besten einfache, geschlossene Formen ohne dünne Stellen.</div>
     <div id="sl-shape"></div>
   </details>
 
@@ -197,6 +199,7 @@ import polygonClipping from 'https://cdn.jsdelivr.net/npm/polygon-clipping@0.15.
 
 /* ---------------- Sprache ---------------- */
 const EN={"Flache Gitterplatten drucken, erwärmen, zwischen den Formen wölben, dann zusammenstecken und verschrauben.": "Print flat lattice plates, heat them, dome them between the molds, then clip and screw the halves together.","Sprache": "Language","Automatisch (System)": "Automatic (system)","Gesicht": "Face","Laden": "Load","Icon-Name, z. B. rocket-launch": "Icon name, e.g. rocket-launch","Namen aus den Material Design Icons (pictogrammers.com).": "Names from the Material Design Icons (pictogrammers.com).","Text unter dem Icon (optional)": "Text below the icon (optional)","Schrift": "Font","Google-Font-Name oder URL": "Google Font name or URL","z. B. Bangers, Lobster, Pacifico, Anton …": "e.g. Bangers, Lobster, Pacifico, Anton …","Eigene Schrift (.ttf / .otf)": "Own font (.ttf / .otf)","SVG-Datei": "SVG file","Gefüllte Pfade werden erhaben übernommen.": "Filled paths are raised on the plate.","Größe automatisch an die Fläche anpassen": "Fit size to the available area automatically","An: „Designgröße\" ist der Anteil der verfügbaren Fläche (mit „Flache Mitte\" die ebene Fläche, sonst innerhalb des Randes).": "On: \"Design size\" is the share of the available area (with \"Flat middle\" the flat area, otherwise inside the rim).","Form": "Shape","Rahmen & Verbindung": "Frame & connection","Aufbau": "Construction","Zweiteilig: Schraubkappe + C-Clip": "Two halves: screw cap + C-clip","Einteilig: nur Öse": "Single part: hanging loop only","Design auch auf der Rückseite": "Design on the back as well","Oben halten die zwei Gewindehälften mit der Schraubkappe zusammen. Der C-Clip greift mit seinen Nasen hinter beide Rahmen; dafür ist die Platte dort ausgeklinkt. Kappe ab: um den Clip aufklappen.": "At the top the two thread halves are held together by the screw cap. The C-clip hooks behind both frames; the plate is notched there. Cap off: the halves hinge open around the clip.","Öse zum Aufhängen": "Hanging loop","Lochmuster": "Hole pattern","Muster": "Pattern","Keins (geschlossen)": "None (solid)","Waben": "Honeycomb","Kreise": "Circles","Quadrate": "Squares","Dreiecke": "Triangles","Ovale": "Ovals","Kreuze": "Crosses","Schlitze": "Slots","Ziegel": "Bricks","Rauten": "Diamonds","Sterne": "Stars","Herzen": "Hearts","Blumen": "Flowers","Tropfen": "Drops","Wellen": "Waves","Löcher an Rand und Design anschneiden": "Cut holes at rim and design","Umformung & Formen": "Forming & molds","Ansicht": "View","Druckteile (flach)": "Printed parts (flat)","Geformt (Vorschau)": "Formed (preview)","Zusammengebaut": "Assembled","Formen (Patrize/Matrize)": "Molds (male/female)","Drahtgitter": "Wireframe","Farben": "Colors","Gleiche Farbe = gleiches Filament. Die Reihenfolge der Filament-Plätze im Export:": "Same color = same filament. Order of the filament slots in the export:","3MF für Bambu Studio / Orca": "3MF for Bambu Studio / Orca","Projektdatei: jedes Teil ist schon seinem Filament-Platz zugewiesen, im Slicer muss nichts mehr eingefärbt werden. Nach dem Öffnen einmal „Anordnen\" drücken. Im Slicer müssen mindestens so viele Filamente angelegt sein wie oben Plätze stehen, sonst fallen die höheren Plätze auf Filament 1 zurück.": "Project file: every part is already assigned to its filament slot, nothing has to be painted in the slicer. Press \"Arrange\" once after opening. The slicer needs at least as many filaments as there are slots above, otherwise the higher slots fall back to filament 1.","3MF für andere Slicer": "3MF for other slicers","Einstellungen speichern (.json)": "Save settings (.json)","Einstellungen laden": "Load settings","Berechne …": "Computing …","Kamera": "Camera","Platte": "Plate","Rahmen & Gewinde": "Frame & thread","Kappe & Clip": "Cap & clip","Formen": "Molds","Rahmen": "Frame","Kappe": "Cap","Designgröße": "Design size","Vertikaler Versatz": "Vertical offset","Designhöhe (erhaben)": "Design height (raised)","Breite": "Width","Eckenrundung": "Corner rounding","Randbreite (flach)": "Rim width (flat)","Plattendicke": "Plate thickness","Rahmenbreite": "Frame width","Rahmenhöhe": "Frame height","Gewinde-Ø": "Thread Ø","Gewindesteigung": "Thread pitch","Gewindelänge": "Thread length","Gewinde-Position (0° = oben)": "Thread position (0° = top)","Gewindespiel": "Thread clearance","Clip-Länge": "Clip length","Clip-Position (0° = unten)": "Clip position (0° = bottom)","Lochabstand": "Hole spacing","Stegbreite": "Wall width","Drehung": "Rotation","Abstand zum Design": "Distance to design","Ösen-Außen-Ø": "Loop outer Ø","Loch-Ø": "Hole Ø","Formhöhe (Kuppel)": "Forming height (dome)","Kissenform (flach oben, steiler Rand)": "Pillow shape (flat top, steep edge)","Flache Mitte": "Flat middle","Passungsspiel": "Fit clearance","Formwand": "Mold wall","Formsockel": "Mold base","Lippe zwischen Mulde und Rahmen-Nut": "Lip between cavity and frame groove","Zusätzliche Tasche in der Kuppelform": "Extra pocket in the dome mold","An dieser Stelle braucht das Gewinde einen großen Sockel. Eine flachere Stelle wählen oder den Gewinde-Ø verkleinern.": "The thread needs a large base at this spot. Choose a flatter spot or reduce the thread Ø.","Kein Clip: An dieser Form gibt es keine Stelle, an der er als Scharnier funktioniert (gerade oder leicht nach außen gewölbt, ohne dass die Form über die Scharnierlinie ragt). Eckenrundung erhöhen, Form vergrößern oder eine andere Form wählen.": "No clip: this shape has no spot where it works as a hinge (straight or slightly convex, with no part of the shape crossing the hinge line). Increase corner rounding, enlarge the shape or pick another shape.","Clip auf {0} mm gekürzt, damit er an eine Stelle passt, an der sich das Ornament aufklappen lässt. ": "Clip shortened to {0} mm so it fits a spot where the ornament can hinge open. ","Clip automatisch dorthin verschoben, wo das Aufklappen funktioniert.": "Clip moved automatically to a spot where hinging open works.","Form oder Gewindeposition sind nicht spiegelsymmetrisch: Die Rückseite ist gespiegelt und bekommt ein eigenes Formenpaar („hinten“).": "Shape or thread position are not mirror-symmetric: the back is mirrored and gets its own pair of molds (\"back\").","Hälfte": "Half","Druckteil": "Part","mm dick": "mm thick","Löcher": "Holes","Kuppel": "Dome","Pressform": "Mold","Vorderseite": "Front","Rückseite": "Back","Rueckseite": "Back","Schraubkappe": "Screw cap","Patrize": "Male mold","Matrize": "Female mold","Patrize vorn": "Male mold front","Matrize vorn": "Female mold front","Patrize hinten": "Male mold back","Matrize hinten": "Female mold back","vorderseite": "front","rueckseite": "back","kappe": "cap","druckteil": "part","patrize": "male_mold","matrize": "female_mold","patrize_hinten": "male_mold_back","matrize_hinten": "female_mold_back","einstellungen": "settings","gesicht": "face","Lade „{0}“ …": "Loading \"{0}\" …","„{0}“ geladen.": "\"{0}\" loaded.","„{0}“ nicht gefunden. Bitte den genauen Namen von fonts.google.com verwenden.": "\"{0}\" not found. Please use the exact name from fonts.google.com.","Icon „{0}“ geladen.": "Icon \"{0}\" loaded.","Icon „{0}“ nicht gefunden.": "Icon \"{0}\" not found."};
+Object.assign(EN,{"Eigene Form (SVG oder Bild)":"Own shape (SVG or image)","Es wird der äußere Umriss übernommen. Am besten einfache, geschlossene Formen ohne dünne Stellen.":"The outer silhouette is used. Simple closed shapes without thin parts work best.","Eigene Form „{0}“ geladen.":"Own shape \"{0}\" loaded.","In der Datei wurde kein brauchbarer Umriss gefunden. Bitte eine gefüllte, geschlossene Form verwenden.":"No usable outline found in the file. Please use a filled, closed shape."});
 let langPref='auto';try{langPref=localStorage.getItem('tf-lang')||'auto';}catch(e){}
 const sysLang=()=>((navigator.languages&&navigator.languages[0])||navigator.language||'en').toLowerCase().startsWith('de')?'de':'en';
 let LANG=langPref==='auto'?sysLang():langPref;
@@ -222,8 +225,10 @@ const P = {
   loop:true, loopD:9, loopHole:4,
   formH:12, gap:0.3, moldWall:5, moldBase:4, rimSeat:0, lipW:1.5,
   showFlat:true, showFormed:true, showMolds:true, assembled:true, wire:false,
-  colPlate:'#f5c518', colFrame:'#3d414c', colDesign:'#3d414c', colHard:'#3d414c', colMold:'#8a8e98'
+  colPlate:'#f5c518', colFrame:'#3d414c', colDesign:'#3d414c', colHard:'#3d414c', colMold:'#8a8e98',
+  customShape:null
 };
+let customVer=0;
 const COLS=[['colPlate','Platte'],['colFrame','Rahmen & Gewinde'],['colDesign','Design'],['colHard','Kappe & Clip'],['colMold','Formen']];
 const colKey=n=>n==='Platte'?'colPlate':n==='Rahmen'?'colFrame':n==='Design'?'colDesign':(n==='Kappe'||n==='Clip')?'colHard':'colMold';
 const SLIDERS = {
@@ -279,7 +284,7 @@ function fillet(pts,r){
     out.push(a,...curve(a,p,b,10));}
   return out;
 }
-function getOutline(shape,c){const o=SHAPES[shape]();return c>0.001&&shape!=='circle'&&shape!=='oval'?normalize(fillet(o,c)):o;}
+function getOutline(shape,c){const o=shape==='custom'?(P.customShape||SHAPES.circle()).map(q=>[q[0],q[1]]):(SHAPES[shape]||SHAPES.circle)();return c>0.001&&shape!=='circle'&&shape!=='oval'?normalize(fillet(o,c)):o;}
 function curve(a,c,b,n){const o=[];for(let i=1;i<n;i++){const t=i/n,u=1-t;o.push([u*u*a[0]+2*u*t*c[0]+t*t*b[0],u*u*a[1]+2*u*t*c[1]+t*t*b[1]]);}o.push(b);return o;}
 function ring(n,f){const p=[];for(let i=0;i<n;i++)p.push(f(i));return normalize(p);}
 function rrRaw(w,h,r){const p=[];const seg=12;const c=[[w/2-r,h/2-r,0],[-w/2+r,h/2-r,1],[-w/2+r,-h/2+r,2],[w/2-r,-h/2+r,3]];
@@ -408,6 +413,50 @@ async function getIcon(name){
 }
 
 /* ---------------- Design-Polygone ---------------- */
+/* ---------------- Eigene Umrissform ---------------- */
+function simplifyRing(pts,eps){
+  const n=pts.length;if(n<8)return pts;
+  let far=0,fd=-1;for(let i=1;i<n;i++){const d=Math.hypot(pts[i][0]-pts[0][0],pts[i][1]-pts[0][1]);if(d>fd){fd=d;far=i;}}
+  const dp=(a)=>{if(a.length<3)return a;const[x1,y1]=a[0],[x2,y2]=a[a.length-1],l=Math.hypot(x2-x1,y2-y1)||1e-9;let m=0,mi=0;
+    for(let i=1;i<a.length-1;i++){const d=Math.abs((a[i][0]-x1)*(y2-y1)-(a[i][1]-y1)*(x2-x1))/l;if(d>m){m=d;mi=i;}}
+    return m<=eps?[a[0],a[a.length-1]]:[...dp(a.slice(0,mi+1)).slice(0,-1),...dp(a.slice(mi))];};
+  const A=dp(pts.slice(0,far+1)),Bq=dp([...pts.slice(far),pts[0]]);
+  return[...A.slice(0,-1),...Bq.slice(0,-1)];
+}
+const chaikin=pts=>{const o=[],n=pts.length;for(let i=0;i<n;i++){const a=pts[i],b=pts[(i+1)%n];o.push([a[0]*0.75+b[0]*0.25,a[1]*0.75+b[1]*0.25],[a[0]*0.25+b[0]*0.75,a[1]*0.25+b[1]*0.75]);}return o;};
+function finishOutline(ringPts){
+  let o=normalize(ringPts);o=simplifyRing(o,0.003);
+  o=o.filter((q,i)=>{const r=o[(i+o.length-1)%o.length];return Math.hypot(q[0]-r[0],q[1]-r[1])>0.006;});
+  if(o.length<3||Math.abs(area(o))<0.02)throw new Error('empty');
+  return normalize(o).map(([x,y])=>[+x.toFixed(5),+y.toFixed(5)]);
+}
+function outlineFromSvg(txt){
+  const polys=svgPolys(txt).filter(q=>q.outer.length>2);if(!polys.length)throw new Error('empty');
+  let u=[];for(const q of polys){try{u=polygonClipping.union(u,[[q.outer]]);}catch(e){}}
+  let best=null,ba=0;for(const poly of u){const a=Math.abs(area(poly[0]));if(a>ba){ba=a;best=poly[0];}}
+  if(!best)throw new Error('empty');
+  return finishOutline(best.slice(0,-1));
+}
+async function outlineFromImage(file){
+  const img=await createImageBitmap(file),sc=Math.min(1,320/Math.max(img.width,img.height)),w=Math.max(2,Math.round(img.width*sc)),h=Math.max(2,Math.round(img.height*sc));
+  const cv=document.createElement('canvas');cv.width=w;cv.height=h;const cx=cv.getContext('2d',{willReadFrequently:true});cx.drawImage(img,0,0,w,h);
+  const d=cx.getImageData(0,0,w,h).data;let transp=0;for(let i=3;i<d.length;i+=4)if(d[i]<128)transp++;
+  const useA=transp>w*h*0.01,bg=[d[0],d[1],d[2]],W2=w+2,H2=h+2,m=new Uint8Array(W2*H2);
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4;
+    m[(y+1)*W2+x+1]=useA?(d[i+3]>=128?1:0):(Math.abs(d[i]-bg[0])+Math.abs(d[i+1]-bg[1])+Math.abs(d[i+2]-bg[2])>90?1:0);}
+  // Randkanten der gefüllten Pixel sammeln (gefüllt liegt links der Kante) und zu Schleifen verbinden
+  const next=new Map(),key=(x,y)=>y*(W2+1)+x,add=(x1,y1,x2,y2)=>{const k=key(x1,y1);if(!next.has(k))next.set(k,[]);next.get(k).push([x2,y2]);};
+  const f=(x,y)=>x<0||y<0||x>=W2||y>=H2?0:m[y*W2+x];
+  for(let y=0;y<H2;y++)for(let x=0;x<W2;x++)if(m[y*W2+x]){
+    if(!f(x,y-1))add(x+1,y,x,y);if(!f(x+1,y))add(x+1,y+1,x+1,y);if(!f(x,y+1))add(x,y+1,x+1,y+1);if(!f(x-1,y))add(x,y,x,y+1);}
+  let best=null,ba=0;
+  for(const[k0,list]of next){while(list.length){
+    const loop=[];let x=k0%(W2+1),y=(k0-x)/(W2+1),guard=0;
+    for(;;){const l=next.get(key(x,y));if(!l||!l.length||guard++>4e6)break;const q=l.pop();loop.push([x,-y]);x=q[0];y=q[1];if(key(x,y)===k0)break;}
+    const a=Math.abs(area(loop));if(a>ba){ba=a;best=loop;}}}
+  if(!best||best.length<8)throw new Error('empty');
+  return finishOutline(chaikin(chaikin(simplifyRing(best,0.9))));
+}
 let svgText=null;
 const toPolys=(shapes,flip)=>shapes.map(s=>{const e=s.extractPoints(10);const m=p=>[p.x,flip?-p.y:p.y];return{outer:e.shape.map(m),holes:e.holes.map(h=>h.map(m))}});
 function svgPolys(txt){
@@ -650,7 +699,7 @@ async function build(){
   const clipSym=!cp||(Math.abs(cp.p[0])<0.01&&Math.abs(cp.n[0])<0.01);
 
   const lipW=hasBorder?P.lipW:0, Ld=lipW>0.05?offsetLoop(B,-(bw+lipW)):Lin; // Kuppel beginnt erst hinter der Lippe
-  const field=getField(Ld.map(p=>[p[0]/W,p[1]/W]),P.shape+':'+P.corner+':'+(hasBorder?((bw+lipW)/W).toFixed(4):'0'));
+  const field=getField(Ld.map(p=>[p[0]/W,p[1]/W]),(P.shape==='custom'?'custom'+customVer:P.shape)+':'+P.corner+':'+(hasBorder?((bw+lipW)/W).toFixed(4):'0'));
 
   // Design einpassen
   if(polys.length){
@@ -995,14 +1044,27 @@ document.getElementById('iconName').addEventListener('keydown',e=>{if(e.key==='E
 document.getElementById('iconText').oninput=e=>{P.iconText=e.target.value;rebuild();};
 
 const shapeBox=document.getElementById('shapes');
-for(const k of Object.keys(SHAPES)){
-  const pts=getOutline(k,0.08);let y0=1e9,y1=-1e9;for(const[,y]of pts){y0=Math.min(y0,y);y1=Math.max(y1,y);}
+function shapeButton(k){
+  const pts=getOutline(k,k==='custom'?0:0.08);let y0=1e9,y1=-1e9;for(const[,y]of pts){y0=Math.min(y0,y);y1=Math.max(y1,y);}
   const sc=80/Math.max(1,y1-y0);
   const d='M'+pts.map(([x,y])=>`${(x*sc+50).toFixed(1)},${(50-y*sc).toFixed(1)}`).join('L')+'Z';
-  const b=document.createElement('button');b.title=k;b.innerHTML=`<svg viewBox="0 0 100 100"><path d="${d}"/></svg>`;
-  b.classList.toggle('on',k===P.shape);b.onclick=()=>{P.shape=k;shapeBox.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));rebuild();};
-  shapeBox.appendChild(b);
+  let b=[...shapeBox.children].find(x=>x.title===k);
+  if(!b){b=document.createElement('button');b.title=k;shapeBox.appendChild(b);
+    b.onclick=()=>{P.shape=k;markShape();rebuild();};}
+  b.innerHTML=`<svg viewBox="0 0 100 100"><path d="${d}"/></svg>`;
 }
+const markShape=()=>shapeBox.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.title===P.shape));
+for(const k of Object.keys(SHAPES))shapeButton(k);
+markShape();
+const shapeMsg=document.getElementById('shapeMsg');
+async function loadShapeFile(f){
+  try{
+    const isSvg=/\.svg$/i.test(f.name)||f.type==='image/svg+xml';
+    P.customShape=isSvg?outlineFromSvg(await f.text()):await outlineFromImage(f);
+    customVer++;P.shape='custom';shapeButton('custom');markShape();shapeMsg.textContent=TF('Eigene Form „{0}“ geladen.',f.name);rebuild();
+  }catch(err){shapeMsg.textContent=T('In der Datei wurde kein brauchbarer Umriss gefunden. Bitte eine gefüllte, geschlossene Form verwenden.');}
+}
+document.getElementById('shapeFile').onchange=e=>{const f=e.target.files[0];if(f)loadShapeFile(f);};
 for(const k of CHECKS){
   const el=document.getElementById(k);el.checked=P[k];
   el.onchange=()=>{P[k]=el.checked;
@@ -1038,7 +1100,8 @@ document.getElementById('loadSettings').onchange=async e=>{
   fontSel.value=P.font;setSource(P.source);setMode(P.mode);addIconButton(P.icon,true);markIcon();
   for(const k of CHECKS)document.getElementById(k).checked=P[k];
   for(const[k]of COLS)document.getElementById('c-'+k).value=P[k];
-  shapeBox.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.title===P.shape));rebuild();
+  if(P.customShape){customVer++;shapeButton('custom');}else if(P.shape==='custom')P.shape='circle';
+  markShape();rebuild();
 };
 
 /* ---------------- 3MF ---------------- */
@@ -1100,7 +1163,7 @@ function build3mf(bbl){
 }
 document.getElementById('ex3mf').onclick=()=>last&&download(`${slug()}_thermoform_bambu.3mf`,build3mf(true),'model/3mf');
 document.getElementById('ex3mfGeneric').onclick=()=>last&&download(`${slug()}_thermoform.3mf`,build3mf(false),'model/3mf');
-window.__tf={P,stlData,build3mf,indexedMesh,camera,controls,root,get last(){return last;}};
+window.__tf={loadShapeFile,P,stlData,build3mf,indexedMesh,camera,controls,root,get last(){return last;}};
 
 const langSel=document.getElementById('lang');langSel.value=langPref;
 langSel.onchange=()=>{langPref=langSel.value;try{localStorage.setItem('tf-lang',langPref);}catch(e){}LANG=langPref==='auto'?sysLang():langPref;translateDom();build();};
