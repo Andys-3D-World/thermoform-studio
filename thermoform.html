@@ -104,7 +104,7 @@ canvas{display:block}
     <div class="row file"><label>Eigene Form (SVG oder Bild)</label><input type="file" id="shapeFile" accept=".svg,.png,.jpg,.jpeg,.webp,.gif"></div>
     <div class="hint" id="shapeMsg">Es wird der äußere Umriss übernommen. Dünne Teile und Lücken (Beine, Fäden, Zacken) lassen sich mit „Lücken füllen &amp; glätten" zu einer druckbaren Fläche schließen.</div>
     <div class="toggle">Eigene Form: dünne Teile behalten <input type="checkbox" id="thinKeep" checked></div>
-    <div class="hint">An: Beine, Zacken und andere schmale Teile bleiben erhalten und werden massiv (Rahmen ohne Gitter). Aus: Sie werden entfernt, übrig bleibt die Fläche, die sich wölben lässt.</div>
+    <div class="hint">An: Beine, Zacken und andere schmale Teile bleiben erhalten und werden ganz als Rand gebaut (massiv, ohne Muster); Muster und Wölbung bekommen nur die großen Flächen. Aus: Schmale Teile werden entfernt.</div>
     <div id="sl-shape"></div>
   </details>
 
@@ -207,7 +207,7 @@ Object.assign(EN,{"Die Form hat keine gerade Stelle für den Clip, deshalb wurde
 Object.assign(EN,{"Öse an der Kappe drehen":"Rotate eyelet on the cap"});
 Object.assign(EN,{"Eigene Form: Lücken füllen & glätten":"Own shape: fill gaps & smooth","Es wird der äußere Umriss übernommen. Dünne Teile und Lücken (Beine, Fäden, Zacken) lassen sich mit „Lücken füllen & glätten\" zu einer druckbaren Fläche schließen.":"The outer silhouette is used. Thin parts and gaps (legs, threads, spikes) can be closed into a printable area with \"Fill gaps & smooth\"."});
 Object.assign(EN,{"Die Form ist an manchen Stellen zu eng: Glättung automatisch auf {0} % erhöht.":"The shape is too narrow in places: smoothing raised to {0} % automatically.","Diese Form ist zu verwinkelt für fehlerfreie Pressformen. „Lücken füllen & glätten“ weiter erhöhen oder die Vorlage vereinfachen.":"This shape is too intricate for clean molds. Increase \"Fill gaps & smooth\" or simplify the source."});
-Object.assign(EN,{"Eigene Form: dünne Teile behalten":"Own shape: keep thin parts","An: Beine, Zacken und andere schmale Teile bleiben erhalten und werden massiv (Rahmen ohne Gitter). Aus: Sie werden entfernt, übrig bleibt die Fläche, die sich wölben lässt.":"On: legs, spikes and other narrow parts are kept and become solid (frame without lattice). Off: they are removed, leaving the area that can be domed."});
+Object.assign(EN,{"Eigene Form: dünne Teile behalten":"Own shape: keep thin parts","An: Beine, Zacken und andere schmale Teile bleiben erhalten und werden ganz als Rand gebaut (massiv, ohne Muster); Muster und Wölbung bekommen nur die großen Flächen. Aus: Schmale Teile werden entfernt.":"On: legs, spikes and other narrow parts are kept and built entirely as border (solid, no pattern); only the large areas get pattern and dome. Off: narrow parts are removed.","Eigene Form: schmale Teile ganz als Rand bis Breite":"Own shape: narrow parts fully as border up to width"});
 let langPref='auto';try{langPref=localStorage.getItem('tf-lang')||'auto';}catch(e){}
 const sysLang=()=>((navigator.languages&&navigator.languages[0])||navigator.language||'en').toLowerCase().startsWith('de')?'de':'en';
 let LANG=langPref==='auto'?sysLang():langPref;
@@ -234,14 +234,14 @@ const P = {
   formH:12, gap:0.3, moldWall:5, moldBase:4, rimSeat:0, lipW:1.5,
   showFlat:true, showFormed:true, showMolds:true, assembled:true, wire:false,
   colPlate:'#f5c518', colFrame:'#3d414c', colDesign:'#3d414c', colHard:'#3d414c', colMold:'#8a8e98',
-  customShape:null, shapeSmooth:1, thinKeep:true, eyeRot:90
+  customShape:null, shapeSmooth:1, thinKeep:true, thinW:8, eyeRot:90
 };
 let customVer=0;
 const COLS=[['colPlate','Platte'],['colFrame','Rahmen & Gewinde'],['colDesign','Design'],['colHard','Kappe & Clip'],['colMold','Formen']];
 const colKey=n=>n==='Platte'?'colPlate':n==='Rahmen'?'colFrame':n==='Design'?'colDesign':(n==='Kappe'||n==='Clip')?'colHard':'colMold';
 const SLIDERS = {
   'sl-design':[['designSize','Designgröße',20,100,1,'%'],['designY','Vertikaler Versatz',-30,30,0.5,'mm'],['designH','Designhöhe (erhaben)',0.4,4,0.1,'mm']],
-  'sl-shape':[['width','Breite',25,180,1,'mm'],['corner','Eckenrundung',0,20,1,'%'],['shapeSmooth','Eigene Form: Lücken füllen & glätten',0,20,0.5,'%'],['rim','Randbreite (flach)',1,8,0.1,'mm'],['plateT','Plattendicke',0.4,3,0.1,'mm']],
+  'sl-shape':[['width','Breite',25,180,1,'mm'],['corner','Eckenrundung',0,20,1,'%'],['shapeSmooth','Eigene Form: Lücken füllen & glätten',0,20,0.5,'%'],['thinW','Eigene Form: schmale Teile ganz als Rand bis Breite',0,25,0.5,'mm'],['rim','Randbreite (flach)',1,8,0.1,'mm'],['plateT','Plattendicke',0.4,3,0.1,'mm']],
   'sl-frame':[['borderW','Rahmenbreite',0,4,0.1,'mm'],['borderH','Rahmenhöhe',0.8,5,0.1,'mm']],
   'sl-thread':[['studD','Gewinde-Ø',6,16,0.5,'mm'],['pitch','Gewindesteigung',1,3,0.25,'mm'],['studL','Gewindelänge',4,14,0.5,'mm'],['studPos','Gewinde-Position (0° = oben)',-150,150,5,'°'],['threadGap','Gewindespiel',0.05,0.6,0.05,'mm'],['eyeRot','Öse an der Kappe drehen',0,180,15,'°'],['clipLen','Clip-Länge',4,20,0.5,'mm'],['clipPos','Clip-Position (0° = unten)',-150,150,5,'°']],
   'sl-lattice':[['cell','Lochabstand',2,12,0.1,'mm'],['wall','Stegbreite',0.4,3,0.05,'mm'],['holeAngle','Drehung',0,90,5,'°'],['designMargin','Abstand zum Design',0,4,0.1,'mm']],
@@ -321,15 +321,17 @@ function despike(L){
     if(!ch)break;}
   return L;
 }
-function offsetLoop(B,d){return despike(offsetLoop0(B,d));}
-function offsetLoop0(B,d){
+function offsetLoop(B,d,thin){return despike(offsetLoop0(B,d,thin));} // thin: halbe Breite, unter der ein Teil als "schmal" gilt und die Schleife dort zusammenfällt
+function offsetLoop0(B,d,thin){
   const K=B.length;if(Math.abs(d)<1e-6)return B.map(p=>[p[0],p[1]]);
-  const raw=B.map((p,k)=>{const a=B[(k+K-1)%K],b=B[(k+1)%K];
+  const off=dd=>B.map((p,k)=>{const a=B[(k+K-1)%K],b=B[(k+1)%K];
     const n1x=p[1]-a[1],n1y=a[0]-p[0],n2x=b[1]-p[1],n2y=p[0]-b[0],l1=Math.hypot(n1x,n1y)||1,l2=Math.hypot(n2x,n2y)||1;
     let nx=n1x/l1+n2x/l2,ny=n1y/l1+n2y/l2;const l=Math.hypot(nx,ny);
     if(l<1e-6){nx=n1x/l1;ny=n1y/l1;}else{nx/=l;ny/=l;}
-    const cos=Math.max(0.25,(nx*n1x+ny*n1y)/l1);return[p[0]+nx*d/cos,p[1]+ny*d/cos];});
-  const ok=raw.map(p=>inPoly(p[0],p[1],B)===(d<0)&&distPoly(p[0],p[1],B)>=Math.abs(d)*0.97);
+    const cos=Math.max(0.25,(nx*n1x+ny*n1y)/l1);return[p[0]+nx*dd/cos,p[1]+ny*dd/cos];});
+  const raw=off(d),test=(L,dd)=>L.map(p=>inPoly(p[0],p[1],B)===(dd<0)&&distPoly(p[0],p[1],B)>=Math.abs(dd)*0.97);
+  const ok=test(raw,d);
+  if(d<0&&thin>-d){const t2=test(off(-thin),-thin);for(let k=0;k<K;k++)ok[k]=ok[k]&&t2[k];}
   if(!ok.some(Boolean))return raw;
   return raw.map((p,k)=>{if(ok[k])return p;for(let s=1;s<K;s++){if(ok[(k+s)%K])return raw[(k+s)%K];if(ok[(k-s+K)%K])return raw[(k-s+K)%K];}return p;});
 }
@@ -761,7 +763,8 @@ async function build(){
   const outSym=outline.every(([x,y])=>distPoly(-x,y,outline)<0.06);
   // Punkte genau auf der Mittelachse einfügen, damit Gewinde und Clip bei symmetrischen Formen exakt mittig sitzen können
   const onAxis=L=>{const o=[];L.forEach((a,i)=>{const b=L[(i+1)%L.length];o.push(a);if(a[0]*b[0]<-1e-9){const f=a[0]/(a[0]-b[0]);o.push([0,a[1]+(b[1]-a[1])*f]);}});return o;};
-  const B=onAxis(resample(outline,W/100)), Lin=hasBorder?offsetLoop(B,-bw):B.map(p=>[p[0],p[1]]), LoF=offsetLoop(B,fg+0.05);
+  const thinH=P.shape==='custom'&&P.thinKeep&&hasBorder?P.thinW/2:0; // eigene Form: Teile schmaler als thinW werden ganz Rand
+  const B=onAxis(resample(outline,W/100)), Lin=hasBorder?offsetLoop(B,-bw,thinH):B.map(p=>[p[0],p[1]]), LoF=offsetLoop(B,fg+0.05);
   const edgeY=up=>{let best=null;for(let x=-0.5;x<=0.5;x+=0.1){for(let y=up?oy1:oy0;up?y>oy0:y<oy1;y+=up?-0.1:0.1){if(inPoly(x,y,outline)){best=best===null?y:(up?Math.max(best,y):Math.min(best,y));break;}}}return best===null?(up?oy1:oy0):best;};
   const topY=edgeY(true),botY=edgeY(false);
 
@@ -791,8 +794,8 @@ async function build(){
     :!cp?'':(tabKey?T('Die Form hat keine gerade Stelle für den Clip, deshalb wurde eine kleine gerade Lasche angesetzt. '):'')+(bhClip+fg+clipTw>bh+0.01?T('Rahmen zu niedrig für einen bündigen Clip: Der Clip steht etwas über. Rahmenhöhe erhöhen. '):'')+(clipLen<P.clipLen-0.01?TF('Clip auf {0} mm gekürzt, damit er an eine Stelle passt, an der sich das Ornament aufklappen lässt. ',clipLen.toFixed(1)):'')+(cp.moved?T('Clip automatisch dorthin verschoben, wo das Aufklappen funktioniert.'):'');
   const clipSym=!cp||(Math.abs(cp.p[0])<0.01&&Math.abs(cp.n[0])<0.01);
 
-  const lipW=hasBorder?P.lipW:0, Ld=lipW>0.05?offsetLoop(B,-(bw+lipW)):Lin; // Kuppel beginnt erst hinter der Lippe
-  const field=getField(Ld.map(p=>[p[0]/W,p[1]/W]),(P.shape==='custom'?'custom'+customVer:P.shape)+':'+P.corner+tabKey+':'+(hasBorder?((bw+lipW)/W).toFixed(4):'0'));
+  const lipW=hasBorder?P.lipW:0, Ld=lipW>0.05?offsetLoop(B,-(bw+lipW),thinH):Lin; // Kuppel beginnt erst hinter der Lippe
+  const field=getField(Ld.map(p=>[p[0]/W,p[1]/W]),(P.shape==='custom'?'custom'+customVer+'_'+thinH:P.shape)+':'+P.corner+tabKey+':'+(hasBorder?((bw+lipW)/W).toFixed(4):'0'));
 
   // Design einpassen
   if(polys.length){
@@ -857,7 +860,7 @@ async function build(){
     const closed=r=>[...r,r[0]],open=r=>r.slice(0,-1);
     const samples=v=>{const pts=[];v.forEach((a,k)=>{const b=v[(k+1)%v.length],n=Math.max(2,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/step));for(let t=0;t<n;t++)pts.push([a[0]+(b[0]-a[0])*t/n,a[1]+(b[1]-a[1])*t/n]);});return pts;};
     const sx=mir?-1:1,dsh=mir?dsh0:0;
-    const region=[[closed(dedupe(offsetLoop(B,-rim)).map(([x,y])=>[sx*x,y]))]]; // Fläche, in der Löcher erlaubt sind
+    const region=[[closed(dedupe(offsetLoop(B,-rim,thinH)).map(([x,y])=>[sx*x,y]))]]; // Fläche, in der Löcher erlaubt sind
     const nx=notchExp?[[closed(mir?notchExp.map(([x,y])=>[-x,y]):notchExp)]]:null;
     for(const raw of holePolys(P.hole,P.cell,P.wall,Math.hypot(ox1-ox0,oy1-oy0)/2+P.cell)){
       const v=raw.map(([x,y])=>[x*ca-y*sa,x*sa+y*ca]);
@@ -911,13 +914,32 @@ async function build(){
     const K=B.length,V=[],I=[];
     const Bo=B.map(p=>[p[0]*0.9995,p[1]*0.9995]); // minimal nach innen, damit keine Kante exakt auf der Plattenkante liegt
     const z0=P.plateT-0.02; // Rahmen sitzt auf der Platte: eigener Körper, lässt sich separat einfärben
-    // Ausklinkung im Rahmen am Clip: dort ist der Rahmen niedriger, der Clip liegt in der Lücke und schließt oben bündig ab
-    const sp=W/100,inRec=q=>{if(!cp)return false;const dx=q[0]-cp.p[0],dy=q[1]-cp.p[1];return Math.abs(dx*cp.t[0]+dy*cp.t[1])<=clipLen/2+0.3+sp&&dx*cp.n[0]+dy*cp.n[1]>-(cp.dev+bw+2);};
-    const zt=B.map(q=>inRec(q)?bhClip:bh);
-    for(const[L,top]of [[Bo,0],[Bo,1],[Lin,0],[Lin,1]])L.forEach((p,k)=>V.push(p[0],p[1],top?zt[k]:z0));
-    for(let k=0;k<K;k++){const k2=(k+1)%K,ob=k,ob2=k2,ot=K+k,ot2=K+k2,ib=2*K+k,ib2=2*K+k2,it=3*K+k,it2=3*K+k2;
-      I.push(it,ot2,it2,it,ot,ot2, ib,ib2,ob2,ib,ob2,ob, ob,ob2,ot2,ob,ot2,ot, ib,it2,ib2,ib,it,it2);}
-    band=mk(V,I);}
+    if(thinH>0){ // eigene Form mit schmalen Teilen: Rahmen = Fläche zwischen Umriss und Innenkontur als Polygon (schmale Teile komplett massiv)
+      const cl=L=>{const o=[];for(const q of L){const r=o[o.length-1];if(!r||Math.hypot(q[0]-r[0],q[1]-r[1])>0.02)o.push([q[0],q[1]]);}
+        if(o.length>1&&Math.hypot(o[0][0]-o[o.length-1][0],o[0][1]-o[o.length-1][1])<0.02)o.pop();return[[...o,o[0]]];};
+      const ext=(mp,zTop)=>mp.filter(poly=>Math.abs(area(poly[0]))>0.05).map(poly=>{const sh=new THREE.Shape(poly[0].slice(0,-1).map(v2));
+        for(const h of poly.slice(1))if(Math.abs(area(h))>0.01)sh.holes.push(new THREE.Path(h.slice(0,-1).map(v2)));
+        const g=new THREE.ExtrudeGeometry(sh,{depth:zTop-z0,bevelEnabled:false,curveSegments:1});g.translate(0,0,z0);return g;});
+      let geos=[];
+      try{
+        const jit=L=>L.map(([x,y],q)=>[x+Math.sin(q*12.9898+3)*0.006,y+Math.sin(q*78.233+5)*0.006]); // Berührpunkte der Innenkontur mit sich selbst vermeiden
+        const reg=polygonClipping.difference([cl(Bo)],[cl(jit(Lin))]);
+        if(cp){ // Ausklinkung am Clip: dort niedriger, mit senkrechten Enden
+          const hw=clipLen/2+0.5,dd=cp.dev+bw+2,rc=e=>{const r=[[-hw-e,3],[hw+e,3],[hw+e,-dd-e],[-hw-e,-dd-e]].map(([a,b],q)=>[cp.p[0]+cp.t[0]*a+cp.n[0]*b+Math.sin(q*7.1+1)*0.003,cp.p[1]+cp.t[1]*a+cp.n[1]*b+Math.cos(q*3.3+2)*0.003]);return[[[...r,r[0]]]];};
+          // das niedrige Stück greift 0,06 mm in die hohen Nachbarn, damit sich die Körper überlappen statt nur zu berühren
+          geos=[...ext(polygonClipping.difference(reg,rc(0)),bh),...ext(polygonClipping.intersection(reg,rc(0.06)),bhClip)];
+        }else geos=ext(reg,bh);
+      }catch(e){console.error(e);}
+      band=geos.length?merge(geos):null;
+    }
+    if(!band){
+      // Ausklinkung im Rahmen am Clip: dort ist der Rahmen niedriger, der Clip liegt in der Lücke und schließt oben bündig ab
+      const sp=W/100,inRec=q=>{if(!cp)return false;const dx=q[0]-cp.p[0],dy=q[1]-cp.p[1];return Math.abs(dx*cp.t[0]+dy*cp.t[1])<=clipLen/2+0.3+sp&&dx*cp.n[0]+dy*cp.n[1]>-(cp.dev+bw+2);};
+      const zt=B.map(q=>inRec(q)?bhClip:bh);
+      for(const[L,top]of [[Bo,0],[Bo,1],[Lin,0],[Lin,1]])L.forEach((p,k)=>V.push(p[0],p[1],top?zt[k]:z0));
+      for(let k=0;k<K;k++){const k2=(k+1)%K,ob=k,ob2=k2,ot=K+k,ot2=K+k2,ib=2*K+k,ib2=2*K+k2,it=3*K+k,it2=3*K+k2;
+        I.push(it,ot2,it2,it,ot,ot2, ib,ib2,ob2,ib,ob2,ob, ob,ob2,ot2,ob,ot2,ot, ib,it2,ib2,ib,it,it2);}
+      band=mk(V,I);}}
   // Öse (einteilig)
   if(!orn&&P.loop){
     const ro=P.loopD/2, ri=Math.min(P.loopHole/2,ro-0.8), cy=topY+ri+Math.max(0.8,(ro-ri)*0.6);
