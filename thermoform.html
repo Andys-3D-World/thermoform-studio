@@ -21,7 +21,10 @@ summary::before{content:"▸ ";color:var(--muted)}
 details[open] summary::before{content:"▾ "}
 .row{margin:10px 0}
 .row label{display:flex;justify-content:space-between;color:var(--muted);margin-bottom:4px}
-.row label b{color:var(--text);font-weight:500}
+.row label b{color:var(--text);font-weight:500;white-space:nowrap}
+.row label input.num{width:52px;background:transparent;border:1px solid transparent;border-radius:5px;color:var(--text);font:inherit;font-weight:500;text-align:right;padding:1px 4px;cursor:text}
+.row label input.num:hover{border-color:var(--line)}
+.row label input.num:focus{border-color:var(--accent);background:#0e0f12;outline:none}
 input[type=range]{width:100%;accent-color:var(--accent)}
 textarea,select,input[type=text]{width:100%;background:#0e0f12;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px;font:inherit}
 textarea{resize:vertical;min-height:52px;font-size:16px;font-weight:700;text-align:center}
@@ -1097,9 +1100,15 @@ for(const[box,list]of Object.entries(SLIDERS)){
   const el=document.getElementById(box);
   for(const[k,label,min,max,step,unit]of list){
     const row=document.createElement('div');row.className='row';
-    row.innerHTML=`<label>${label}<b><span id="v-${k}">${P[k]}</span> ${unit}</b></label><input type="range" id="s-${k}" min="${min}" max="${max}" step="${step}" value="${P[k]}">`;
+    row.innerHTML=`<label>${label}<b><input class="num" type="text" inputmode="decimal" id="v-${k}" value="${P[k]}" aria-label="${label}"> ${unit}</b></label><input type="range" id="s-${k}" min="${min}" max="${max}" step="${step}" value="${P[k]}">`;
     el.appendChild(row);
-    row.querySelector('input').addEventListener('input',e=>{P[k]=+e.target.value;document.getElementById('v-'+k).textContent=P[k];rebuild();});
+    const sl=row.querySelector('#s-'+k),num=row.querySelector('#v-'+k);
+    sl.addEventListener('input',e=>{P[k]=+e.target.value;num.value=P[k];rebuild();});
+    // Zahl direkt eintippen: Enter oder Verlassen des Felds übernimmt, Pfeil hoch/runter ändert um einen Schritt, Komma oder Punkt gehen beide
+    const apply=v=>{if(!isFinite(v)){num.value=P[k];return;}v=Math.min(max,Math.max(min,v));v=+v.toFixed(3);num.value=v;if(v!==P[k]){P[k]=v;sl.value=v;rebuild();}};
+    num.addEventListener('change',()=>apply(parseFloat(num.value.replace(',','.'))));
+    num.addEventListener('focus',()=>num.select());
+    num.addEventListener('keydown',e=>{if(e.key==='Enter'){num.blur();}else if(e.key==='ArrowUp'||e.key==='ArrowDown'){e.preventDefault();apply((parseFloat(num.value.replace(',','.'))||P[k])+(e.key==='ArrowUp'?step:-step));}else if(e.key==='Escape'){num.value=P[k];num.blur();}});
   }
 }
 const fontSel=document.getElementById('font');
@@ -1119,7 +1128,7 @@ function setSource(v){
   document.querySelectorAll('#srcSeg button').forEach(x=>x.classList.toggle('on',x.dataset.v===v));
   show('textBox',v==='text');show('iconBox',v==='icon');show('svgBox',v==='svg');show('fontBox',v==='text'||v==='icon');
 }
-const setSlider=(k,v)=>{P[k]=v;document.getElementById('s-'+k).value=v;document.getElementById('v-'+k).textContent=v;};
+const setSlider=(k,v)=>{P[k]=v;document.getElementById('s-'+k).value=v;document.getElementById('v-'+k).value=v;};
 document.querySelectorAll('#srcSeg button').forEach(b=>b.onclick=()=>{setSource(b.dataset.v);if(b.dataset.v==='face'&&P.designSize>45)setSlider('designSize',30);rebuild();});
 const holeSel=document.getElementById('hole');holeSel.value=P.hole;holeSel.onchange=()=>{P.hole=holeSel.value;rebuild();};
 const modeSel=document.getElementById('mode');
@@ -1220,7 +1229,7 @@ function stlButtons(){
 document.getElementById('exSettings').onclick=()=>download(`${slug()}_${T('einstellungen')}.json`,JSON.stringify(P,null,2),'application/json');
 document.getElementById('loadSettings').onchange=async e=>{
   const f=e.target.files[0];if(!f)return;Object.assign(P,JSON.parse(await f.text()));
-  for(const list of Object.values(SLIDERS))for(const[k]of list){document.getElementById('s-'+k).value=P[k];document.getElementById('v-'+k).textContent=P[k];}
+  for(const list of Object.values(SLIDERS))for(const[k]of list){document.getElementById('s-'+k).value=P[k];document.getElementById('v-'+k).value=P[k];}
   document.getElementById('text').value=P.text;document.getElementById('iconText').value=P.iconText||'';
   if(P.font.startsWith('gf:'))addFontOption(P.font,P.font.slice(3)+' (Google)');else if(P.font.startsWith('custom:'))P.font='helvetiker_bold';
   if(P.lattice===false)P.hole='none';delete P.lattice;holeSel.value=P.hole;
