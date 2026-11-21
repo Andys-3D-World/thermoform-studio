@@ -102,7 +102,7 @@ canvas{display:block}
   <details open><summary>Form</summary>
     <div class="row shapes" id="shapes"></div>
     <div class="row file"><label>Eigene Form (SVG oder Bild)</label><input type="file" id="shapeFile" accept=".svg,.png,.jpg,.jpeg,.webp,.gif"></div>
-    <div class="hint" id="shapeMsg">Es wird der äußere Umriss übernommen. Am besten einfache, geschlossene Formen ohne dünne Stellen.</div>
+    <div class="hint" id="shapeMsg">Es wird der äußere Umriss übernommen. Dünne Teile und Lücken (Beine, Fäden, Zacken) lassen sich mit „Lücken füllen &amp; glätten" zu einer druckbaren Fläche schließen.</div>
     <div id="sl-shape"></div>
   </details>
 
@@ -203,6 +203,8 @@ Object.assign(EN,{"Eigene Form (SVG oder Bild)":"Own shape (SVG or image)","Es w
 Object.assign(EN,{"Rahmen zu niedrig für einen bündigen Clip: Der Clip steht etwas über. Rahmenhöhe erhöhen. ":"Frame too low for a flush clip: the clip sticks out a little. Increase the frame height. "});
 Object.assign(EN,{"Die Form hat keine gerade Stelle für den Clip, deshalb wurde eine kleine gerade Lasche angesetzt. ":"The shape has no straight spot for the clip, so a small straight tab was added. "});
 Object.assign(EN,{"Öse an der Kappe drehen":"Rotate eyelet on the cap"});
+Object.assign(EN,{"Eigene Form: Lücken füllen & glätten":"Own shape: fill gaps & smooth","Es wird der äußere Umriss übernommen. Dünne Teile und Lücken (Beine, Fäden, Zacken) lassen sich mit „Lücken füllen & glätten\" zu einer druckbaren Fläche schließen.":"The outer silhouette is used. Thin parts and gaps (legs, threads, spikes) can be closed into a printable area with \"Fill gaps & smooth\"."});
+Object.assign(EN,{"Die Form ist an manchen Stellen zu eng: Glättung automatisch auf {0} % erhöht.":"The shape is too narrow in places: smoothing raised to {0} % automatically.","Diese Form ist zu verwinkelt für fehlerfreie Pressformen. „Lücken füllen & glätten“ weiter erhöhen oder die Vorlage vereinfachen.":"This shape is too intricate for clean molds. Increase \"Fill gaps & smooth\" or simplify the source."});
 let langPref='auto';try{langPref=localStorage.getItem('tf-lang')||'auto';}catch(e){}
 const sysLang=()=>((navigator.languages&&navigator.languages[0])||navigator.language||'en').toLowerCase().startsWith('de')?'de':'en';
 let LANG=langPref==='auto'?sysLang():langPref;
@@ -229,14 +231,14 @@ const P = {
   formH:12, gap:0.3, moldWall:5, moldBase:4, rimSeat:0, lipW:1.5,
   showFlat:true, showFormed:true, showMolds:true, assembled:true, wire:false,
   colPlate:'#f5c518', colFrame:'#3d414c', colDesign:'#3d414c', colHard:'#3d414c', colMold:'#8a8e98',
-  customShape:null, eyeRot:90
+  customShape:null, shapeSmooth:6, eyeRot:90
 };
 let customVer=0;
 const COLS=[['colPlate','Platte'],['colFrame','Rahmen & Gewinde'],['colDesign','Design'],['colHard','Kappe & Clip'],['colMold','Formen']];
 const colKey=n=>n==='Platte'?'colPlate':n==='Rahmen'?'colFrame':n==='Design'?'colDesign':(n==='Kappe'||n==='Clip')?'colHard':'colMold';
 const SLIDERS = {
   'sl-design':[['designSize','Designgröße',20,100,1,'%'],['designY','Vertikaler Versatz',-30,30,0.5,'mm'],['designH','Designhöhe (erhaben)',0.4,4,0.1,'mm']],
-  'sl-shape':[['width','Breite',25,180,1,'mm'],['corner','Eckenrundung',0,20,1,'%'],['rim','Randbreite (flach)',1,8,0.1,'mm'],['plateT','Plattendicke',0.4,3,0.1,'mm']],
+  'sl-shape':[['width','Breite',25,180,1,'mm'],['corner','Eckenrundung',0,20,1,'%'],['shapeSmooth','Eigene Form: Lücken füllen & glätten',0,20,0.5,'%'],['rim','Randbreite (flach)',1,8,0.1,'mm'],['plateT','Plattendicke',0.4,3,0.1,'mm']],
   'sl-frame':[['borderW','Rahmenbreite',0,4,0.1,'mm'],['borderH','Rahmenhöhe',0.8,5,0.1,'mm']],
   'sl-thread':[['studD','Gewinde-Ø',6,16,0.5,'mm'],['pitch','Gewindesteigung',1,3,0.25,'mm'],['studL','Gewindelänge',4,14,0.5,'mm'],['studPos','Gewinde-Position (0° = oben)',-150,150,5,'°'],['threadGap','Gewindespiel',0.05,0.6,0.05,'mm'],['eyeRot','Öse an der Kappe drehen',0,180,15,'°'],['clipLen','Clip-Länge',4,20,0.5,'mm'],['clipPos','Clip-Position (0° = unten)',-150,150,5,'°']],
   'sl-lattice':[['cell','Lochabstand',2,12,0.1,'mm'],['wall','Stegbreite',0.4,3,0.05,'mm'],['holeAngle','Drehung',0,90,5,'°'],['designMargin','Abstand zum Design',0,4,0.1,'mm']],
@@ -303,7 +305,21 @@ function distPoly(x,y,p){let d=1e9;for(let i=0;i<p.length;i++){const[ax,ay]=p[i]
 function resample(outline,step){const B=[];outline.forEach((a,i)=>{const b=outline[(i+1)%outline.length],len=Math.hypot(b[0]-a[0],b[1]-a[1]),n=Math.max(1,Math.ceil(len/step));
   if(len<0.05)return;for(let t=0;t<n;t++)B.push([a[0]+(b[0]-a[0])*t/n,a[1]+(b[1]-a[1])*t/n]);});return B;}
 // Kontur versetzen (d>0 nach außen, d<0 nach innen); Punktzahl bleibt gleich, ungültige Punkte fallen auf den nächsten gültigen
-function offsetLoop(B,d){
+// Rückfaltungen entfernen: läuft eine Schleife A→B→A (an abgeschnürten Stellen), würden zwei Flächen deckungsgleich
+// aufeinanderliegen. Solche Zacken werden auf einen Punkt zusammengezogen; die Punktzahl bleibt gleich.
+function despike(L){
+  const K=L.length,eq=(a,b)=>Math.abs(a[0]-b[0])<2e-3&&Math.abs(a[1]-b[1])<2e-3;
+  for(let pass=0;pass<60;pass++){let ch=false;
+    for(let k=0;k<K;k++){
+      let i=(k+K-1)%K,j=(k+1)%K,c=0;
+      while(c++<K&&eq(L[i],L[k]))i=(i+K-1)%K;c=0;while(c++<K&&eq(L[j],L[k]))j=(j+1)%K;
+      if(i!==j&&!eq(L[i],L[k])&&eq(L[i],L[j])){const t=[L[i][0],L[i][1]];for(let q=(i+1)%K;q!==j;q=(q+1)%K)L[q]=[t[0],t[1]];L[j]=[t[0],t[1]];ch=true;}
+    }
+    if(!ch)break;}
+  return L;
+}
+function offsetLoop(B,d){return despike(offsetLoop0(B,d));}
+function offsetLoop0(B,d){
   const K=B.length;if(Math.abs(d)<1e-6)return B.map(p=>[p[0],p[1]]);
   const raw=B.map((p,k)=>{const a=B[(k+K-1)%K],b=B[(k+1)%K];
     const n1x=p[1]-a[1],n1y=a[0]-p[0],n2x=b[1]-p[1],n2y=p[0]-b[0],l1=Math.hypot(n1x,n1y)||1,l2=Math.hypot(n2x,n2y)||1;
@@ -440,13 +456,39 @@ function outlineFromSvg(txt){
   if(!best)throw new Error('empty');
   return finishOutline(best.slice(0,-1));
 }
-async function outlineFromImage(file){
-  const img=await createImageBitmap(file),sc=Math.min(1,320/Math.max(img.width,img.height)),w=Math.max(2,Math.round(img.width*sc)),h=Math.max(2,Math.round(img.height*sc));
+// Eigene Form läuft über ein Pixelraster: so lassen sich Lücken (z. B. zwischen Beinen) füllen und dünne Teile glätten,
+// damit Rahmen, Wölbung und Pressformen überhaupt Platz haben.
+const MASK_N=320,MASK_PAD=70;
+function padMask(w,h,fill){const W2=w+2*MASK_PAD,H2=h+2*MASK_PAD,m=new Uint8Array(W2*H2);
+  let x0=w,x1=0;for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(fill(x,y)){m[(y+MASK_PAD)*W2+x+MASK_PAD]=1;if(x<x0)x0=x;if(x>x1)x1=x;}return{m,w:W2,h:H2,L:Math.max(w,h),w0:Math.max(1,x1-x0+1)};}
+async function maskFromImage(file){
+  const img=await createImageBitmap(file),sc=Math.min(1,MASK_N/Math.max(img.width,img.height)),w=Math.max(2,Math.round(img.width*sc)),h=Math.max(2,Math.round(img.height*sc));
   const cv=document.createElement('canvas');cv.width=w;cv.height=h;const cx=cv.getContext('2d',{willReadFrequently:true});cx.drawImage(img,0,0,w,h);
   const d=cx.getImageData(0,0,w,h).data;let transp=0;for(let i=3;i<d.length;i+=4)if(d[i]<128)transp++;
-  const useA=transp>w*h*0.01,bg=[d[0],d[1],d[2]],W2=w+2,H2=h+2,m=new Uint8Array(W2*H2);
-  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4;
-    m[(y+1)*W2+x+1]=useA?(d[i+3]>=128?1:0):(Math.abs(d[i]-bg[0])+Math.abs(d[i+1]-bg[1])+Math.abs(d[i+2]-bg[2])>90?1:0);}
+  const useA=transp>w*h*0.01,bg=[d[0],d[1],d[2]];
+  return padMask(w,h,(x,y)=>{const i=(y*w+x)*4;return useA?d[i+3]>=128:Math.abs(d[i]-bg[0])+Math.abs(d[i+1]-bg[1])+Math.abs(d[i+2]-bg[2])>90;});
+}
+function maskFromPolys(polys){
+  const b=bboxOf(polys),sc=MASK_N/Math.max(b.x1-b.x0,b.y1-b.y0),w=Math.max(2,Math.ceil((b.x1-b.x0)*sc)),h=Math.max(2,Math.ceil((b.y1-b.y0)*sc));
+  const cv=document.createElement('canvas');cv.width=w;cv.height=h;const cx=cv.getContext('2d',{willReadFrequently:true});cx.fillStyle='#000';
+  for(const q of polys){cx.beginPath();q.outer.forEach(([x,y],k)=>{const X=(x-b.x0)*sc,Y=(b.y1-y)*sc;k?cx.lineTo(X,Y):cx.moveTo(X,Y);});cx.closePath();cx.fill();}
+  const d=cx.getImageData(0,0,w,h).data;return padMask(w,h,(x,y)=>d[(y*w+x)*4+3]>=128);
+}
+function morph(m,w,h,R,dil){ // dil: alles näher als R an gefüllten Pixeln wird gefüllt; sonst: alles näher als R am Leeren wird geleert
+  if(R<0.5)return m;const d=new Float32Array(w*h),t=dil?1:0,D=Math.SQRT2;
+  for(let i=0;i<w*h;i++)d[i]=m[i]===t?0:1e9;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x;let v=d[i];if(x>0)v=Math.min(v,d[i-1]+1);if(y>0){v=Math.min(v,d[i-w]+1);if(x>0)v=Math.min(v,d[i-w-1]+D);if(x<w-1)v=Math.min(v,d[i-w+1]+D);}d[i]=v;}
+  for(let y=h-1;y>=0;y--)for(let x=w-1;x>=0;x--){const i=y*w+x;let v=d[i];if(x<w-1)v=Math.min(v,d[i+1]+1);if(y<h-1){v=Math.min(v,d[i+w]+1);if(x<w-1)v=Math.min(v,d[i+w+1]+D);if(x>0)v=Math.min(v,d[i+w-1]+D);}d[i]=v;}
+  const o=new Uint8Array(w*h);for(let i=0;i<w*h;i++)o[i]=dil?(d[i]<=R?1:0):(d[i]>R?1:0);return o;
+}
+function largestPart(m,w,h){ // nur das größte zusammenhängende Stück behalten (z. B. ohne Schatten unter der Figur)
+  const lab=new Int32Array(w*h),st=[];let best=0,bn=0,n=0;
+  for(let i=0;i<w*h;i++)if(m[i]&&!lab[i]){n++;let c=0;lab[i]=n;st.push(i);
+    while(st.length){const q=st.pop();c++;const x=q%w;for(const r of [q-w,q+w,x>0?q-1:-1,x<w-1?q+1:-1])if(r>=0&&r<w*h&&m[r]&&!lab[r]){lab[r]=n;st.push(r);}}
+    if(c>bn){bn=c;best=n;}}
+  const o=new Uint8Array(w*h);if(best)for(let i=0;i<w*h;i++)if(lab[i]===best)o[i]=1;return o;
+}
+function traceMask(m,W2,H2){
   // Randkanten der gefüllten Pixel sammeln (gefüllt liegt links der Kante) und zu Schleifen verbinden
   const next=new Map(),key=(x,y)=>y*(W2+1)+x,add=(x1,y1,x2,y2)=>{const k=key(x1,y1);if(!next.has(k))next.set(k,[]);next.get(k).push([x2,y2]);};
   const f=(x,y)=>x<0||y<0||x>=W2||y>=H2?0:m[y*W2+x];
@@ -458,7 +500,27 @@ async function outlineFromImage(file){
     for(;;){const l=next.get(key(x,y));if(!l||!l.length||guard++>4e6)break;const q=l.pop();loop.push([x,-y]);x=q[0];y=q[1];if(key(x,y)===k0)break;}
     const a=Math.abs(area(loop));if(a>ba){ba=a;best=loop;}}}
   if(!best||best.length<8)throw new Error('empty');
-  return finishOutline(chaikin(chaikin(simplifyRing(best,0.9))));
+  return best;
+}
+// pct = "Lücken füllen & glätten" in % der Bildgröße: erst Lücken schließen, dann dünne Fäden und Spitzen entfernen
+// needMm = halbe Mindestbreite in mm (Rahmen + Lippe): schmalere Teile würden die Wölbung abschnüren und werden entfernt
+function outlineFromMask(src,pct,needMm){
+  const R=pct/100*src.L,Ro=Math.max(R/3,needMm/P.width*src.w0);let m=largestPart(src.m,src.w,src.h);
+  if(R>=0.5)m=morph(morph(m,src.w,src.h,R,true),src.w,src.h,R,false);
+  if(Ro>=0.5){m=morph(morph(m,src.w,src.h,Ro,false),src.w,src.h,Ro,true);m=largestPart(m,src.w,src.h);}
+  return finishOutline(chaikin(chaikin(simplifyRing(traceMask(m,src.w,src.h),0.9))));
+}
+const customKey=()=>[P.shapeSmooth,P.width,P.borderW,P.lipW,P.mode].join('_');
+function nonManifold(geo){ // Kanten, die nicht genau zweimal (hin und zurück) benutzt werden
+  const{tris}=indexedMesh(geo),m=new Map();
+  for(let i=0;i<tris.length;i+=3)for(let j=0;j<3;j++){const a=tris[i+j],b=tris[i+(j+1)%3],k=a<b?a*4194304+b:b*4194304+a;m.set(k,(m.get(k)||0)+(a<b?1:-1)+1000);}
+  let bad=0;for(const v of m.values())if(v!==2000)bad++;return bad;
+}
+let customSrc=null; // Quelle der eigenen Form (Raster, bei SVG zusätzlich der exakte Umriss), damit der Glättungsregler neu rechnen kann
+function customFromSrc(){
+  const pct=P.shapeSmooth+(customSrc.bump||0);customSrc.key=customKey();
+  const need=(P.mode==='ornament'?Math.max(0.8,P.borderW)+P.lipW:P.borderW>0.05?P.borderW+P.lipW:0)+0.8;
+  P.customShape=pct<0.5&&customSrc.exact?customSrc.exact:outlineFromMask(customSrc,pct,need);customVer++;
 }
 let svgText=null;
 const toPolys=(shapes,flip)=>shapes.map(s=>{const e=s.extractPoints(10);const m=p=>[p.x,flip?-p.y:p.y];return{outer:e.shape.map(m),holes:e.holes.map(h=>h.map(m))}});
@@ -670,6 +732,7 @@ async function build(){
   const W=P.width,orn=P.mode==='ornament',fg=P.gap;
   const bw=orn?Math.max(0.8,P.borderW):P.borderW, bh=Math.max(P.borderH,P.plateT), hasBorder=bw>0.05&&bh>P.plateT+0.05;
   const rim=Math.max(P.rim,hasBorder?bw+0.4:0);
+  if(P.shape==='custom'&&customSrc&&customSrc.key!==customKey()){customSrc.bump=0;shapeMsg.textContent='';try{customFromSrc();shapeButton('custom');}catch(e){console.error(e);}}
   let outline=getOutline(P.shape,P.corner/100).map(([x,y])=>[x*W,y*W]),tabKey='';
   // Findet der Clip an der Form keine Stelle (zackige oder runde-eingebuchtete Umrisse), wird am Wunschwinkel eine kleine
   // gerade Lasche angesetzt: Ihre Außenkante liegt auf der Außenhülle, damit sich die Hälften dort aufklappen lassen.
@@ -933,6 +996,12 @@ async function build(){
   document.getElementById('asymMsg').textContent=asym?T('Form oder Gewindeposition sind nicht spiegelsymmetrisch: Die Rückseite ist gespiegelt und bekommt ein eigenes Formenpaar („hinten“).'):'';
   for(const p of parts)p.geos=p.geos.filter(g=>g[1]);
 
+  if(P.shape==='custom'&&customSrc){ // eigene Form: Netze prüfen; bei Fehlern die Glättung schrittweise erhöhen und neu bauen
+    const badM=nonManifold(maleGeo)+nonManifold(femaleGeo)+nonManifold(plateGeo)+(backGeo&&backGeo!==plateGeo?nonManifold(backGeo):0);
+    if(badM&&(customSrc.bump||0)<10){customSrc.bump=(customSrc.bump||0)+1;try{customFromSrc();shapeButton('custom');}catch(e){console.error(e);}
+      shapeMsg.textContent=TF('Die Form ist an manchen Stellen zu eng: Glättung automatisch auf {0} % erhöht.',P.shapeSmooth+customSrc.bump);build();return;}
+    if(badM)shapeMsg.textContent=T('Diese Form ist zu verwinkelt für fehlerfreie Pressformen. „Lücken füllen & glätten“ weiter erhöhen oder die Vorlage vereinfachen.');
+  }
   last={parts,orn,asym,moldsB,plateGeo,backGeo,designGeo,designB,maleGeo,femaleGeo,cap,capM,clip,clipM,formedF:null,formedB:null,base,H,R,Ro,h,W,oy0,topY,botY,thick,fg};
   const needF=P.showFormed||P.assembled;
   if(needF)last.formedF=[formGeo(plateGeo),formGeo(designGeo),formGeo(frameF)];
@@ -1090,8 +1159,11 @@ const shapeMsg=document.getElementById('shapeMsg');
 async function loadShapeFile(f){
   try{
     const isSvg=/\.svg$/i.test(f.name)||f.type==='image/svg+xml';
-    P.customShape=isSvg?outlineFromSvg(await f.text()):await outlineFromImage(f);
-    customVer++;P.shape='custom';shapeButton('custom');markShape();shapeMsg.textContent=TF('Eigene Form „{0}“ geladen.',f.name);rebuild();
+    let src;
+    if(isSvg){const txt=await f.text(),polys=svgPolys(txt).filter(q=>q.outer.length>2);if(!polys.length)throw new Error('empty');src=maskFromPolys(polys);try{src.exact=outlineFromSvg(txt);}catch(e){}}
+    else src=await maskFromImage(f);
+    const old=customSrc;src.bump=0;customSrc=src;try{customFromSrc();}catch(e){customSrc=old;throw e;}
+    P.shape='custom';shapeButton('custom');markShape();shapeMsg.textContent=TF('Eigene Form „{0}“ geladen.',f.name);rebuild();
   }catch(err){shapeMsg.textContent=T('In der Datei wurde kein brauchbarer Umriss gefunden. Bitte eine gefüllte, geschlossene Form verwenden.');}
 }
 document.getElementById('shapeFile').onchange=e=>{const f=e.target.files[0];if(f)loadShapeFile(f);};
@@ -1130,7 +1202,7 @@ document.getElementById('loadSettings').onchange=async e=>{
   fontSel.value=P.font;setSource(P.source);setMode(P.mode);addIconButton(P.icon,true);markIcon();
   for(const k of CHECKS)document.getElementById(k).checked=P[k];
   for(const[k]of COLS)document.getElementById('c-'+k).value=P[k];
-  if(P.customShape){customVer++;shapeButton('custom');}else if(P.shape==='custom')P.shape='circle';
+  customSrc=null;if(P.customShape){customVer++;shapeButton('custom');}else if(P.shape==='custom')P.shape='circle';
   markShape();rebuild();
 };
 
