@@ -1264,7 +1264,7 @@ function meshXml(id,name,geo,attr){
 }
 // bbl=true: Projektdatei im Format von Bambu Studio / Orca mit Filament-Platz je Teil.
 // bbl=false: Standard-3MF mit Farben als Basismaterial (was der Slicer daraus macht, hängt vom Slicer ab).
-function build3mf(bbl){
+function build3mf(bbl,proj){
   const XML='<?xml version="1.0" encoding="UTF-8"?>\n',CORE='xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02"';
   const sl=slotList(),meshes=[],asm=[],items=[],cfg=[],inst=[];let id=1,x=0,y=0,rowH=0;
   const plan=last.parts.map(p=>({p,ids:p.geos.map(([n])=>[id++,n])}));
@@ -1290,6 +1290,7 @@ function build3mf(bbl){
     files['3D/Objects/object_1.model']=`${XML}<model unit="millimeter" xml:lang="en-US" ${NS}><metadata name="BambuStudio:3mfVersion">1</metadata><resources>${meshes.join('')}</resources><build/></model>`;
     files['3D/_rels/3dmodel.model.rels']=XML+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Target="/3D/Objects/object_1.model" Id="rel-1" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/></Relationships>';
     files['Metadata/model_settings.config']=`${XML}<config>${cfg.join('')}<plate><metadata key="plater_id" value="1"/><metadata key="plater_name" value="Thermoform"/>${inst.join('')}</plate></config>`;
+    if(proj)files['Metadata/project_settings.config']=JSON.stringify(proj,null,1);
   }else{
     const mats=`<basematerials id="1000">${sl.map((c,i)=>`<base name="Filament ${i+1}" displaycolor="${c.toUpperCase()}FF"/>`).join('')}</basematerials>`;
     files['3D/3dmodel.model']=`${XML}<model unit="millimeter" xml:lang="de-DE" ${CORE}><metadata name="Application">Thermoform Studio</metadata><resources>${mats}${meshes.join('')}${asm.join('')}</resources><build>${items.join('')}</build></model>`;
