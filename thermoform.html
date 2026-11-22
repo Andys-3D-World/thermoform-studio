@@ -217,6 +217,7 @@ Object.assign(EN,{"Drucker für Bambu Studio":"Printer for Bambu Studio","Nicht 
 "Die Datei bringt deine Farben mit und stellt in Bambu Studio diesen Drucker mit Standardprofil (0,20 mm, PLA Basic) ein. Danach je Platz dein echtes Filament wählen.":"The file carries your colors and sets this printer with its standard profile (0.20 mm, PLA Basic) in Bambu Studio. Then pick your real filament for each slot.",
 "Ohne Drucker bleiben deine Profile in Bambu Studio unverändert, aber die Farben kommen von den dort angelegten Filamenten, nicht aus der Datei.":"Without a printer your profiles in Bambu Studio stay untouched, but the colors come from the filaments set up there, not from the file.",
 "Projektdatei: jedes Teil ist schon seinem Filament-Platz zugewiesen. Nach dem Öffnen einmal „Anordnen\" drücken. Ohne gewählten Drucker müssen im Slicer mindestens so viele Filamente angelegt sein wie oben Plätze stehen, sonst fallen die höheren Plätze auf Filament 1 zurück.":"Project file: every part is already assigned to its filament slot. Press \"Arrange\" once after opening. Without a chosen printer the slicer needs at least as many filaments as there are slots above, otherwise the higher slots fall back to filament 1."});
+Object.assign(EN,{"Die Spitze wurde für den Clip abgerundet. ":"The tip was rounded for the clip. "});
 let langPref='auto';try{langPref=localStorage.getItem('tf-lang')||'auto';}catch(e){}
 const sysLang=()=>((navigator.languages&&navigator.languages[0])||navigator.language||'en').toLowerCase().startsWith('de')?'de':'en';
 let LANG=langPref==='auto'?sysLang():langPref;
@@ -271,7 +272,8 @@ const SHAPES = {
   square:()=>roundRect(1,1,0.14),
   rect:()=>roundRect(1,0.6,0.1),
   hexagon:()=>ring(6,i=>{const a=Math.PI/6+i/6*Math.PI*2;return[Math.cos(a),Math.sin(a)]}),
-  heart:()=>ring(160,i=>{const t=i/160*Math.PI*2;return[16*Math.sin(t)**3,13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t)]}),
+  // Herz: die klassische Kurve hat oben eine haarfeine, sehr tiefe Kerbe; hier ist die Kerbe ein offenes V
+  heart:()=>{const p=[[0,7.06]];for(let i=0;i<=120;i++){const t=(30+i*2.5)*Math.PI/180;p.push([16*Math.sin(t)**3,13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t)]);}return normalize(p);},
   star:()=>ring(10,i=>{const a=Math.PI/2+i/10*Math.PI*2,r=i%2?0.42:1;return[Math.cos(a)*r,Math.sin(a)*r]}),
   softstar:()=>ring(10,i=>{const a=Math.PI/2+i/10*Math.PI*2,r=i%2?0.62:1;return[Math.cos(a)*r,Math.sin(a)*r]}),
   triangle:()=>ring(3,i=>{const a=Math.PI/2+i/3*Math.PI*2;return[Math.cos(a),Math.sin(a)]}),
@@ -717,11 +719,14 @@ function placeClip(B,len,posDeg,avoid,depth,keep){
   const evalK=k=>{
     const path=arcPath(B,k,len/2+0.3),s=path[0].p,e=path[path.length-1].p,p=B[k];
     let tx=e[0]-s[0],ty=e[1]-s[1];const l=Math.hypot(tx,ty)||1;tx/=l;ty/=l;const nx=ty,ny=-tx;
-    let dev=0;for(const q of path)dev=Math.max(dev,Math.abs((q.p[0]-p[0])*nx+(q.p[1]-p[1])*ny)); // Wölbung unter dem Clip
+    let dev0=0;for(const q of path)dev0=Math.max(dev0,Math.abs((q.p[0]-p[0])*nx+(q.p[1]-p[1])*ny)); // Wölbung unter dem Clip
+    // Die Innenkante des Rahmens hat an einer Rundung den kleineren Radius und wölbt sich unter dem Clip stärker:
+    // aus der Wölbung des Umrisses den Radius schätzen und die Wölbung der Innenkante daraus berechnen
+    const hh=len/2+0.3,Rr=dev0>1e-4?(dev0*dev0+hh*hh)/(2*dev0):1e9,Ri=Rr-(keep-0.6),dev=Math.max(dev0,Ri>hh?Ri-Math.sqrt(Ri*Ri-hh*hh):9);
     let over=0;for(const q of B)over=Math.max(over,(q[0]-p[0])*nx+(q[1]-p[1])*ny);               // ragt die Form über die Scharnierlinie?
     // die inneren Ecken der Ausklinkung müssen im Teil liegen und noch Material bis zum Rand lassen
     const room=[-1,0,1].every(f=>{const x=p[0]+tx*f*(len/2+0.4)-nx*(depth+dev),y=p[1]+ty*f*(len/2+0.4)-ny*(depth+dev);return inPoly(x,y,B)&&distPoly(x,y,B)>=keep;});
-    return{k,p,t:[tx,ty],n:[nx,ny],dev,ok:room&&over<=0.35&&dev<=0.8,score:over*3+dev+(room?0:10)};
+    return{k,p,t:[tx,ty],n:[nx,ny],dev,ok:room&&over<=0.35&&dev0<=0.8&&dev<=1.3,score:over*3+dev+(room?0:10)};
   };
   let bestC=null,low=null;
   for(let s=0;s<=K/2;s++)for(const k of s?[(k0+s)%K,(k0-s+K)%K]:[k0]){
@@ -760,6 +765,32 @@ async function build(){
       const ang=(-90-P.clipPos)*Math.PI/180,d=[Math.cos(ang),Math.sin(ang)],t=[-d[1],d[0]];
       let m=-1e9,c=0;for(const q of outline){const v=q[0]*d[0]+q[1]*d[1];if(v>m){m=v;c=q[0]*t[0]+q[1]*t[1];}}
       if(Math.abs(c)<W*0.03)c=0;
+      // Zuerst versuchen, eine Spitze nur abzurunden: größter Kreis mit Radius rn, der an der Spitze in die Form passt.
+      // Die Spitze jenseits der Berührpunkte fällt weg, der Kreis bildet eine runde Nase, auf der ein kurzer Clip sitzt.
+      {
+        const rn=bw+3.2,n0=B0.length;let ks=0,mv=-1e9;B0.forEach((q,i)=>{const v=q[0]*d[0]+q[1]*d[1];if(v>mv+1e-6){mv=v;ks=i;}});
+        // Achse der Spitze: vom äußersten Punkt zur Mitte zwischen zwei Umrisspunkten links und rechts davon (zeigt nach innen)
+        const ps=B0[ks],nn=Math.max(2,Math.round(rn*1.5/(W/100))),pL=B0[(ks-nn+n0)%n0],pR=B0[(ks+nn)%n0];
+        let ux=(pL[0]+pR[0])/2-ps[0],uy=(pL[1]+pR[1])/2-ps[1];const ul=Math.hypot(ux,uy)||1;ux/=ul;uy/=ul;
+        const at=kk=>[ps[0]+ux*kk,ps[1]+uy*kk],fit=kk=>{const q=at(kk);return inPoly(q[0],q[1],outline)?distPoly(q[0],q[1],outline):0;};
+        let lo=rn*0.5,hi=rn*3.2;
+        if(fit(hi)>=rn){
+          for(let i=0;i<24;i++){const mid=(lo+hi)/2;if(fit(mid)>=rn)hi=mid;else lo=mid;}
+          const[cx,cy]=at(hi);
+          // Berührpunkt = nächster Umrisspunkt zum Kreismittelpunkt; alles, was weiter Richtung Spitze liegt, fällt weg
+          let nd=1e9,nq=ps;for(const q of B0){const dd=Math.hypot(q[0]-cx,q[1]-cy);if(dd<nd){nd=dd;nq=q;}}
+          const ax=-((nq[0]-cx)*ux+(nq[1]-cy)*uy)-0.05,ww=rn*3,q=(a,b)=>[cx-uy*a-ux*b,cy+ux*a-uy*b];
+          const cutP=[q(-ww,ax),q(ww,ax),q(ww,ax+ww),q(-ww,ax+ww)],circ=[];
+          for(let i=0;i<64;i++){const a=i/64*Math.PI*2;circ.push([cx+Math.cos(a)*rn,cy+Math.sin(a)*rn]);}
+          try{
+            const cl=L=>[[[...L,L[0]]]],u=polygonClipping.union(polygonClipping.difference(cl(outline),cl(cutP)),cl(circ));let best=null,ba=0;
+            for(const poly of u){const a=Math.abs(area(poly[0]));if(a>ba){ba=a;best=poly[0];}}
+            if(best){let o=best.slice(0,-1);if(area(o)<0)o.reverse();
+              if(tryClip(resample(o,W/100))){outline=o;tabKey=':nose'+[P.clipLen,P.clipPos,bw,fg,W].join('_');}}
+          }catch(e){console.error(e);}
+        }
+      }
+      if(!tabKey){
       const hl=P.clipLen/2+bw+2.2,D=2*bw+2*fg+3.4,r=1.2,pt=(a,b)=>[t[0]*(c+a)+d[0]*b,t[1]*(c+a)+d[1]*b],tab=[pt(-hl,m-D),pt(hl,m-D)];
       for(let i=0;i<=6;i++){const a=i/6*Math.PI/2;tab.push(pt(hl-r+Math.sin(a)*r,m-r+Math.cos(a)*r-0+0));}
       tab.splice(2,7,...[...Array(7)].map((_,i)=>{const a=i/6*Math.PI/2;return pt(hl-r+Math.cos(a)*r,m-r+Math.sin(a)*r);}),...[...Array(7)].map((_,i)=>{const a=i/6*Math.PI/2;return pt(-hl+r-Math.sin(a)*r,m-r+Math.cos(a)*r);}));
@@ -768,6 +799,7 @@ async function build(){
         for(const poly of u){const a=Math.abs(area(poly[0]));if(a>ba){ba=a;best=poly[0];}}
         if(best){let o=best.slice(0,-1);if(area(o)<0)o.reverse();outline=o;tabKey=':tab'+[P.clipLen,P.clipPos,bw,fg,W].join('_');}
       }catch(e){console.error(e);}
+      }
     }
   }
   let ox0=1e9,ox1=-1e9,oy0=1e9,oy1=-1e9;for(const[x,y]of outline){ox0=Math.min(ox0,x);ox1=Math.max(ox1,x);oy0=Math.min(oy0,y);oy1=Math.max(oy1,y);}
@@ -785,8 +817,14 @@ async function build(){
   document.getElementById('studMsg').textContent=st&&st.depth>W*0.2?T('An dieser Stelle braucht das Gewinde einen großen Sockel. Eine flachere Stelle wählen oder den Gewinde-Ø verkleinern.'):'';
   // Clip: erst mit der gewünschten Länge, sonst automatisch kürzer, bis eine Stelle passt, an der er als Scharnier taugt
   let cp=null,clipLen=P.clipLen;
-  if(orn)for(const f of [1,0.75,0.55]){const Lc=Math.max(3,P.clipLen*f);const c=placeClip(B,Lc,P.clipPos,q=>Math.hypot(q[0]-st.p[0],q[1]-st.p[1])<P.studD+Lc+4,bw+2*fg+2.2,bw+0.6);
-    if(!cp||!c.bad){cp=c;clipLen=Lc;}if(!c.bad)break;}
+  if(orn){ // alle drei Längen probieren; die Stelle, die dem Wunschwinkel am nächsten liegt, gewinnt (bei gleicher Nähe der längere Clip)
+    const angT=(-90-P.clipPos)*Math.PI/180;let bestD=1e9;
+    for(const f of [1,0.75,0.55]){const Lc=Math.max(3,P.clipLen*f);const c=placeClip(B,Lc,P.clipPos,q=>Math.hypot(q[0]-st.p[0],q[1]-st.p[1])<P.studD+Lc+4,bw+2*fg+2.2,bw+0.6);
+      if(!c)continue;
+      let da=Math.atan2(c.p[1],c.p[0])-angT;da=Math.abs(da-Math.PI*2*Math.round(da/(Math.PI*2)));
+      const score=c.bad?100+da:Math.round(da/0.17); // in Schritten von etwa 10°
+      if(score<bestD){bestD=score;cp=c;clipLen=Lc;}}
+  }
   const clipBad=!!(cp&&cp.bad);if(clipBad)cp=null; // keine taugliche Stelle: lieber kein Clip als einer, der nicht funktioniert
   const end=f=>({p:[cp.p[0]+cp.t[0]*f,cp.p[1]+cp.t[1]*f],n:cp.n});
   const clipTw=1.0,bhClip=Math.min(bh,Math.max(P.plateT+0.3,bh-clipTw-fg)); // Rahmenhöhe unter dem Clip: so abgesenkt, dass der Clip bündig mit dem Rahmen abschließt
@@ -802,7 +840,7 @@ async function build(){
     nearNotch=(x,y)=>inPoly(x,y,notchExp);
   }
   document.getElementById('clipMsg').textContent=clipBad?T('Kein Clip: An dieser Form gibt es keine Stelle, an der er als Scharnier funktioniert (gerade oder leicht nach außen gewölbt, ohne dass die Form über die Scharnierlinie ragt). Eckenrundung erhöhen, Form vergrößern oder eine andere Form wählen.')
-    :!cp?'':(tabKey?T('Die Form hat keine gerade Stelle für den Clip, deshalb wurde eine kleine gerade Lasche angesetzt. '):'')+(bhClip+fg+clipTw>bh+0.01?T('Rahmen zu niedrig für einen bündigen Clip: Der Clip steht etwas über. Rahmenhöhe erhöhen. '):'')+(clipLen<P.clipLen-0.01?TF('Clip auf {0} mm gekürzt, damit er an eine Stelle passt, an der sich das Ornament aufklappen lässt. ',clipLen.toFixed(1)):'')+(cp.moved?T('Clip automatisch dorthin verschoben, wo das Aufklappen funktioniert.'):'');
+    :!cp?'':(tabKey.startsWith(':nose')?T('Die Spitze wurde für den Clip abgerundet. '):tabKey?T('Die Form hat keine gerade Stelle für den Clip, deshalb wurde eine kleine gerade Lasche angesetzt. '):'')+(bhClip+fg+clipTw>bh+0.01?T('Rahmen zu niedrig für einen bündigen Clip: Der Clip steht etwas über. Rahmenhöhe erhöhen. '):'')+(clipLen<P.clipLen-0.01?TF('Clip auf {0} mm gekürzt, damit er an eine Stelle passt, an der sich das Ornament aufklappen lässt. ',clipLen.toFixed(1)):'')+(cp.moved?T('Clip automatisch dorthin verschoben, wo das Aufklappen funktioniert.'):'');
   const clipSym=!cp||(Math.abs(cp.p[0])<0.01&&Math.abs(cp.n[0])<0.01);
 
   const lipW=hasBorder?P.lipW:0, Ld=lipW>0.05?offsetLoop(B,-(bw+lipW),thinH):Lin; // Kuppel beginnt erst hinter der Lippe
