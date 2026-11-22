@@ -237,7 +237,7 @@ const P = {
   source:'text', text:'NAME', font:'helvetiker_bold', icon:'heart', iconText:'',
   designSize:90, autoFit:true, designY:0, designH:1.2,
   shape:'circle', width:60, corner:8, rim:2.4, plateT:0.8, pillow:0, flat:0,
-  mode:'ornament', borderW:1.6, borderH:2.4, studD:10, pitch:2, studL:7, studPos:0, threadGap:0.25, clipLen:6, clipPos:0, backDesign:false,
+  mode:'ornament', borderW:1.6, borderH:2.4, studD:10, pitch:2, studL:7, studPos:0, threadGap:0.4, clipLen:6, clipPos:0, backDesign:false,
   hole:'hex', clipHoles:true, holeAngle:0, cell:4.5, wall:0.9, designMargin:0.8,
   loop:true, loopD:9, loopHole:4,
   formH:12, gap:0.3, moldWall:5, moldBase:4, rimSeat:0, lipW:1.5,
@@ -252,7 +252,7 @@ const SLIDERS = {
   'sl-design':[['designSize','Designgröße',20,100,1,'%'],['designY','Vertikaler Versatz',-30,30,0.5,'mm'],['designH','Designhöhe (erhaben)',0.4,4,0.1,'mm']],
   'sl-shape':[['width','Breite',25,180,1,'mm'],['corner','Eckenrundung',0,20,1,'%'],['shapeSmooth','Eigene Form: Lücken füllen & glätten',0,20,0.5,'%'],['thinW','Eigene Form: ohne Muster und Wölbung bis Breite',0,25,0.5,'mm'],['rim','Randbreite (flach)',1,8,0.1,'mm'],['plateT','Plattendicke',0.4,3,0.1,'mm']],
   'sl-frame':[['borderW','Rahmenbreite',0,4,0.1,'mm'],['borderH','Rahmenhöhe',0.8,5,0.1,'mm']],
-  'sl-thread':[['studD','Gewinde-Ø',6,16,0.5,'mm'],['pitch','Gewindesteigung',1,3,0.25,'mm'],['studL','Gewindelänge',4,14,0.5,'mm'],['studPos','Gewinde-Position (0° = oben)',-150,150,5,'°'],['threadGap','Gewindespiel',0.05,0.6,0.05,'mm'],['eyeRot','Öse an der Kappe drehen',0,180,15,'°'],['clipLen','Clip-Länge',4,20,0.5,'mm'],['clipPos','Clip-Position (0° = unten)',-150,150,5,'°']],
+  'sl-thread':[['studD','Gewinde-Ø',6,16,0.5,'mm'],['pitch','Gewindesteigung',1,3,0.25,'mm'],['studL','Gewindelänge',4,14,0.5,'mm'],['studPos','Gewinde-Position (0° = oben)',-150,150,5,'°'],['threadGap','Gewindespiel',0.05,0.9,0.05,'mm'],['eyeRot','Öse an der Kappe drehen',0,180,15,'°'],['clipLen','Clip-Länge',4,20,0.5,'mm'],['clipPos','Clip-Position (0° = unten)',-150,150,5,'°']],
   'sl-lattice':[['cell','Lochabstand',2,12,0.1,'mm'],['wall','Stegbreite',0.4,3,0.05,'mm'],['holeAngle','Drehung',0,90,5,'°'],['designMargin','Abstand zum Design',0,4,0.1,'mm']],
   'sl-loop':[['loopD','Ösen-Außen-Ø',5,20,0.5,'mm'],['loopHole','Loch-Ø',1.5,12,0.5,'mm']],
   'sl-form':[['formH','Formhöhe (Kuppel)',2,40,0.5,'mm'],['pillow','Kissenform (flach oben, steiler Rand)',0,100,5,'%'],['flat','Flache Mitte',0,85,5,'%'],['gap','Passungsspiel',0,1.5,0.05,'mm'],['moldWall','Formwand',2,15,0.5,'mm'],['moldBase','Formsockel',2,15,0.5,'mm'],['lipW','Lippe zwischen Mulde und Rahmen-Nut',0,4,0.1,'mm'],['rimSeat','Zusätzliche Tasche in der Kuppelform',0,3,0.1,'mm']]
@@ -631,12 +631,14 @@ function buildMolds(B,Ld,Lin,LoF,F,C,Zf,gradMag,base,clr,gd,notch,sd,lipD){
 }
 
 /* ---------------- Gewindezapfen (Hälfte), Schraubkappe, C-Clip ---------------- */
-const threadR=(D,p,f)=>{f=(f%1+1)%1;const depth=p*0.5;return D/2-depth+depth*(1-Math.abs(2*f-1));};
+const threadR=(D,p,f)=>{f=(f%1+1)%1;const depth=p*0.5,tri=1-Math.abs(2*f-1);return D/2-depth+depth*Math.min(1,Math.max(0,(tri-0.12)/0.76));}; // Trapezprofil: Spitzen und Grund abgeflacht
 function studGeo(D,L,p,phase,y0){ // halber Zylinder, flache Seite auf z=0, Achse +y
   const nT=28,nL=Math.max(8,Math.round(L/p*16)),V=[],I=[],id=(i,j)=>j*(nT+1)+i;
   for(let j=0;j<=nL;j++){const t=L*j/nL;for(let i=0;i<=nT;i++){const th=Math.PI*i/nT;
-    let r=threadR(D,p,t/p-th/(2*Math.PI)+phase);if(t>L-1)r-=(t-(L-1))*0.6;
-    V.push(r*Math.cos(th),y0+t,r*Math.sin(th));}}
+    let r=threadR(D,p,t/p+th/(2*Math.PI)+phase);if(t>L-1)r-=(t-(L-1))*0.6; // + = Rechtsgewinde
+    // an der Trennfuge etwas zurückgenommen (Elefantenfuß der ersten Schicht) und in der Höhe leicht gestaucht (Fuge schließt nie ganz)
+    const zz=r*Math.sin(th);if(zz<0.5)r-=0.25*(1-zz/0.5);
+    V.push(r*Math.cos(th),y0+t,r*Math.sin(th)*0.97);}}
   for(let j=0;j<nL;j++){
     for(let i=0;i<nT;i++){const a=id(i,j),b=id(i+1,j),c=id(i,j+1),d=id(i+1,j+1);I.push(a,c,b,b,c,d);}
     const R0=id(0,j),L0=id(nT,j),R1=id(0,j+1),L1=id(nT,j+1);I.push(R0,L0,L1,R0,L1,R1);
@@ -647,7 +649,7 @@ function studGeo(D,L,p,phase,y0){ // halber Zylinder, flache Seite auf z=0, Achs
 function capGeo(D,L,p,gap,rot){ // Öffnung bei z=0, Öse oben
   const nP=64,Hc=L+0.8,H=Hc+1.8,nZ=Math.max(8,Math.round(Hc/p*16)),Ro=D/2+gap+2.4,V=[],I=[];
   const inn=(i,j)=>j*nP+(i%nP);
-  for(let j=0;j<=nZ;j++){const z=Hc*j/nZ;for(let i=0;i<nP;i++){const ps=i/nP*Math.PI*2,r=threadR(D,p,z/p+ps/(2*Math.PI))+gap+(z<0.8?(0.8-z)*0.6:0);V.push(r*Math.cos(ps),r*Math.sin(ps),z);}}
+  for(let j=0;j<=nZ;j++){const z=Hc*j/nZ;for(let i=0;i<nP;i++){const ps=i/nP*Math.PI*2,r=threadR(D,p,z/p-ps/(2*Math.PI))+gap+(z<1.2?(1.2-z)*0.6:0);V.push(r*Math.cos(ps),r*Math.sin(ps),z);}}
   const ob0=V.length/3;for(let i=0;i<nP;i++){const ps=i/nP*Math.PI*2;V.push(Ro*Math.cos(ps),Ro*Math.sin(ps),0);}
   const ot0=V.length/3;for(let i=0;i<nP;i++){const ps=i/nP*Math.PI*2;V.push(Ro*Math.cos(ps),Ro*Math.sin(ps),H);}
   const cc=V.length/3;V.push(0,0,Hc);const tc=cc+1;V.push(0,0,H);
